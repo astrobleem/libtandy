@@ -1,0 +1,13 @@
+name: Portable host checks
+on: [push, pull_request]
+permissions:
+  contents: read
+jobs:
+  host:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Existing public host suite
+        run: python3 tools/build.py --target host --cc gcc
+      - name: Portable MIDI checks
+        run: python3 sound/tests/run.py --cc gcc
