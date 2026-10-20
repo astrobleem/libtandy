@@ -23,6 +23,7 @@ The existing MIT copyright and permission notice are retained verbatim in
 | `lt_event.h`, DOS input | Bounded foreground queue; BIOS press events and optional mouse snapshots. No key-up/held-state guarantee, installed ISR or mouse callback. |
 | `lt_time.h`, DOS time | Cooperative caller-driven coarse time. No fine-frame-clock guarantee, callback thread or timer reprogramming. |
 | `lt_audio.h` | Caller-driven channel/event ownership and explicit service/stop. No song decoder or replacement scheduler. |
+| [`sound/`](sound/README.md) | Standalone MIT C89 Standard MIDI File parser and PSG/PIT renderer. The caller supplies timing and hardware transport; see the module's capability revision and range limits. |
 
 Include matching headers and compile the needed `.c` modules directly into
 your application with matching calling convention, memory model and near/far
@@ -50,6 +51,7 @@ Portable host unit tests with a C89 compiler:
 
 ```sh
 python tools/build.py --target host --cc gcc
+python sound/tests/run.py --cc gcc
 ```
 
 On Windows pass the full path of an installed GCC if it is not on PATH.
