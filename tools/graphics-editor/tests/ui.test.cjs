@@ -322,6 +322,9 @@ async function main() {
     async function pixel(selector, x, y) {
       return evaluate("(() => {const c=document.querySelector(" + JSON.stringify(selector) + ");return Array.from(c.getContext('2d').getImageData(" + x + "," + y + ",1,1).data);})()");
     }
+    async function isVisible(selector) {
+      return evaluate("(() => {const e=document.querySelector(" + JSON.stringify(selector) + ");return !!e&&!e.hidden&&getComputedStyle(e).display!=='none';})()");
+    }
     async function clickCanvasPixel(x, y) {
       const rect = await evaluate("(() => {const c=document.querySelector('#art-canvas');c.scrollIntoView({block:'center',inline:'center'});const r=c.getBoundingClientRect();return {x:r.x+(" + x + "+.5)*r.width/c.width,y:r.y+(" + y + "+.5)*r.height/c.height};})()");
       await cdp.send("Input.dispatchMouseEvent", { type: "mouseMoved", x: rect.x, y: rect.y });
@@ -344,6 +347,10 @@ async function main() {
 
     await waitFor("document.querySelector('#asset-mode') !== null", "editor startup");
     await setControl("#asset-mode", "screen");
+    assert.equal(await isVisible("#screen-background-wrap"), true, "screen fill control is visible in screen mode");
+    assert.equal(await isVisible("#screen-background"), true, "screen background chooser is visible in screen mode");
+    assert.equal(await isVisible("#sheet-wrap"), false, "sprite-sheet option is hidden in screen mode");
+    assert.equal(await isVisible("#export-binary"), true, "mode-9 export is visible in screen mode");
     await setFile(photo);
     await waitFor("!document.querySelector('#apply-image').disabled && !document.querySelector('#pending-preview-wrap').hidden", "screen import preview");
     assert.match(await evaluate("document.querySelector('#dither-recommendation').textContent"), /photo/i);
@@ -399,6 +406,10 @@ async function main() {
     assert.deepEqual(await pixel("#art-canvas", 319, 199), [0, 170, 0, 255], "redo reapplies the fill area");
 
     await setControl("#asset-mode", "sprite");
+    assert.equal(await isVisible("#screen-background-wrap"), false, "screen fill control is hidden in sprite mode");
+    assert.equal(await isVisible("#screen-background"), false, "screen background chooser is hidden in sprite mode");
+    assert.equal(await isVisible("#sheet-wrap"), true, "sprite-sheet option is visible in sprite mode");
+    assert.equal(await isVisible("#export-binary"), false, "mode-9 export is hidden in sprite mode");
     await setControl("#dither-mode", "none");
     await setCheckbox("#auto-correct", false);
     await setFile(sprite);

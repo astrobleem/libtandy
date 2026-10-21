@@ -136,3 +136,4 @@ body { font-size: 14px; }
 .palette-lock input { flex: 0 0 auto; margin: 2px 0 0; accent-color: #617b58; }
 .palette-lock strong, .palette-lock small { display: block; }
 .palette-lock small { margin-top: 3px; line-height: 1.4; }
+[hidden] { display: none !important; }

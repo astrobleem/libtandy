@@ -222,6 +222,7 @@
     $("screen-background-wrap").hidden = mode() !== "screen";
     $("screen-background").hidden = mode() !== "screen";
     $("sheet-wrap").hidden = mode() !== "sprite";
+    $("export-binary").hidden = mode() !== "screen";
     $("c-export-caption").textContent = mode() === "sprite"
       ? "Two bitplanes + three Tandy ink colors"
       : "Packed 32 KiB screen data";
