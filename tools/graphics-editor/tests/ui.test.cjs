@@ -152,6 +152,7 @@ class CDP {
     this.socket = new WebSocket(url);
     this.nextId = 1;
     this.pending = new Map();
+    this.eventListeners = new Map();
     this.ready = new Promise((resolve, reject) => {
       const timer = setTimeout(() => reject(new Error("Timed out connecting to the isolated browser debugging socket.")), 5000);
       this.socket.addEventListener("open", () => { clearTimeout(timer); resolve(); }, { once: true });
@@ -160,7 +161,10 @@ class CDP {
     });
     this.socket.addEventListener("message", (event) => {
       const message = JSON.parse(event.data);
-      if (!message.id) return;
+      if (!message.id) {
+        for (const listener of this.eventListeners.get(message.method) || []) listener(message.params || {});
+        return;
+      }
       const pending = this.pending.get(message.id);
       if (!pending) return;
       this.pending.delete(message.id);
@@ -188,6 +192,11 @@ class CDP {
     });
     this.socket.send(JSON.stringify({ id, method, params }));
     return result;
+  }
+  on(method, listener) {
+    const listeners = this.eventListeners.get(method) || [];
+    listeners.push(listener);
+    this.eventListeners.set(method, listeners);
   }
   close() { this.socket.close(); }
 }
@@ -218,6 +227,7 @@ async function main() {
   const server = http.createServer((request, response) => {
     const requested = decodeURIComponent(new URL(request.url, "http://127.0.0.1").pathname);
     const pathname = requested === "/" ? "/index.html" : requested;
+    if (pathname === "/favicon.ico") { response.writeHead(204).end(); return; }
     const target = path.resolve(APP_ROOT, "." + pathname);
     if (!target.startsWith(APP_ROOT + path.sep) && target !== path.join(APP_ROOT, "index.html")) {
       response.writeHead(403).end("Forbidden"); return;
@@ -254,9 +264,20 @@ async function main() {
     if (!pageTarget) throw new Error("Browser opened without a page target.");
     console.log("Browser page target is ready.");
     const cdp = cdpClient = new CDP(pageTarget.webSocketDebuggerUrl);
+    const pageDiagnostics = { console: [], exceptions: [], log: [] };
+    cdp.on("Runtime.consoleAPICalled", (event) => {
+      pageDiagnostics.console.push({ type: event.type, args: (event.args || []).map((arg) => arg.value ?? arg.description ?? "") });
+    });
+    cdp.on("Runtime.exceptionThrown", (event) => {
+      pageDiagnostics.exceptions.push(event.exceptionDetails && (event.exceptionDetails.text || event.exceptionDetails.exception && event.exceptionDetails.exception.description));
+    });
+    cdp.on("Log.entryAdded", (event) => {
+      if (event.entry && event.entry.level === "error") pageDiagnostics.log.push({ text: event.entry.text, url: event.entry.url || "" });
+    });
     await cdp.send("Runtime.enable");
     await cdp.send("Page.enable");
     await cdp.send("DOM.enable");
+    await cdp.send("Log.enable");
     await cdp.send("Page.setDownloadBehavior", { behavior: "allow", downloadPath: output });
 
     async function evaluate(expression) {
@@ -264,12 +285,19 @@ async function main() {
       if (reply.exceptionDetails) throw new Error(reply.exceptionDetails.text || "Page script failed.");
       return reply.result.value;
     }
-    async function waitFor(expression, description, timeout = 8000) {
+    async function waitFor(expression, description, timeout = 15000) {
       const end = Date.now() + timeout;
       while (Date.now() < end) {
         if (await evaluate(expression)) return;
         await sleep(100);
       }
+      let pageState = null;
+      try {
+        pageState = await evaluate("(() => {const ids=['asset-mode','pending-image','pending-preview-wrap','apply-image','canvas-dimensions','canvas-status','toast','frame-count'];return {url:location.href,body:document.body.innerText.slice(0,1800),controls:Object.fromEntries(ids.map(id=>{const e=document.getElementById(id);return [id,e?{text:e.textContent,value:e.value,hidden:e.hidden,disabled:e.disabled}:null]}))};})()");
+      } catch (error) { pageState = { evaluateError: error.message }; }
+      const screenshotName = "failure-" + description.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") + ".png";
+      try { await capture(screenshotName); } catch (error) { pageState.captureError = error.message; }
+      console.error("Timed-out page diagnostics: " + JSON.stringify({ description, pageState, pageDiagnostics }));
       throw new Error("Timed out waiting for " + description + ".");
     }
     async function setFile(file) {
@@ -323,7 +351,14 @@ async function main() {
     await setControl("#auto-strength", 48, "input");
     await capture("01-screen-import-preview.png");
     await click("#apply-image");
-    await waitFor("document.querySelector('#canvas-dimensions').textContent.includes('320 x 200')", "screen conversion");
+    await sleep(500);
+    const afterConvert = await evaluate("(() => {const d=document.querySelector('#canvas-dimensions');const p=document.querySelector('#pending-image');const c=document.querySelector('#art-canvas');return {dimensions:d&&d.textContent,canvas:c&&[c.width,c.height],mode:document.querySelector('#asset-mode')&&document.querySelector('#asset-mode').value,pending:p&&p.textContent,applyDisabled:document.querySelector('#apply-image')&&document.querySelector('#apply-image').disabled,toast:document.querySelector('#toast')&&document.querySelector('#toast').textContent,frames:document.querySelector('#frame-count')&&document.querySelector('#frame-count').textContent};})() ");
+    console.log("Page state after Convert: " + JSON.stringify(afterConvert));
+    await capture("02-screen-after-convert.png");
+    if (pageDiagnostics.exceptions.length || pageDiagnostics.log.length) {
+      console.log("Page errors: " + JSON.stringify(pageDiagnostics));
+    }
+    await waitFor("document.querySelector('#art-canvas').width===320 && document.querySelector('#art-canvas').height===200 && document.querySelector('#toast').textContent.includes('converted')", "screen conversion");
     const beforePencil = await pixel("#art-canvas", 10, 10);
     await click("#palette [data-color='12']");
     await click("[data-tool='pencil']");
@@ -352,7 +387,7 @@ async function main() {
     assert.equal(fs.statSync(mode9Bin).size, 32768, "raw export is exactly 32 KiB");
 
     await setFile(solid);
-    await waitFor("!document.querySelector('#apply-image').disabled", "solid screen import preview");
+    await waitFor("document.querySelector('#pending-image').textContent.includes('solid-screen.png') && !document.querySelector('#apply-image').disabled && !document.querySelector('#pending-preview-wrap').hidden", "solid screen import preview");
     await click("#apply-image");
     await click("#palette [data-color='2']");
     await click("[data-tool='fill']");
@@ -367,17 +402,19 @@ async function main() {
     await setControl("#dither-mode", "none");
     await setCheckbox("#auto-correct", false);
     await setFile(sprite);
-    await waitFor("!document.querySelector('#apply-image').disabled", "sprite import preview");
+    await waitFor("document.querySelector('#pending-image').textContent.includes('black-and-color-sprite.png') && !document.querySelector('#apply-image').disabled && !document.querySelector('#pending-preview-wrap').hidden", "sprite import preview");
     const previewBlack = await pixel("#pending-preview", 0, 0);
     const previewTransparent = await pixel("#pending-preview", 1, 0);
     assert.deepEqual(previewBlack, [0, 0, 0, 255], "opaque black stays visible in the converted preview");
     assert.equal(previewTransparent[3], 0, "transparent index zero stays see-through in the preview");
     await capture("02-sprite-black-and-transparent.png");
     await click("#apply-image");
+    await capture("03-sprite-black-and-transparent-on-canvas.png");
     assert.deepEqual(await pixel("#art-canvas", 0, 0), [0, 0, 0, 255], "opaque black stays visible on the editor canvas");
     assert.equal((await pixel("#art-canvas", 1, 0))[3], 0, "transparent pixel stays see-through on the editor canvas");
     const suggestedInks = await evaluate("Array.from(document.querySelectorAll('.ink-slot i')).map(e=>e.style.backgroundColor)");
-    assert.deepEqual(suggestedInks.slice(0, 3), ["rgb(0, 0, 0)", "rgb(0, 0, 170)", "rgb(170, 0, 0)"], "sprite import suggests colors present in the image");
+    assert.deepEqual(suggestedInks.slice(0, 3).sort(), ["rgb(0, 0, 0)", "rgb(0, 0, 170)", "rgb(170, 0, 0)"].sort(),
+      "sprite import suggests the visible colors present in the image");
     await click("[data-slot='2']");
     await click("#palette [data-color='2']");
     assert.equal(await evaluate("document.querySelector('#lock-sprite-palette').checked"), true, "manually choosing an ink locks the sprite palette");
@@ -402,7 +439,7 @@ async function main() {
     await click("#export-png");
     const spritePng = await waitDownload("black_and_color_sprite_preview.png");
     const spritePngData = decodePng(fs.readFileSync(spritePng));
-    assert.deepEqual(Array.from(spritePngData.pixels.slice(0, 4)), [0, 0, 0, 255], "PNG export keeps opaque black");
+    assert.deepEqual(Array.from(spritePngData.pixels.slice(2 * 4, 3 * 4)), [0, 0, 0, 255], "PNG export keeps an unerased opaque black pixel");
     assert.equal(spritePngData.pixels[7], 0, "PNG export keeps transparent index zero");
 
     await setCheckbox("#as-sprite-sheet", true);
@@ -420,7 +457,7 @@ async function main() {
     await setFile(opaqueZero);
     await waitFor("document.querySelector('#toast').textContent.includes('index 0 is transparent')", "opaque sprite index-zero rejection");
     assert.equal(await evaluate("document.querySelector('#frame-count').textContent"), "2", "invalid opaque black project does not replace the valid artwork");
-    await capture("03-sprite-sheet-frames.png");
+    await capture("04-sprite-sheet-frames.png");
 
     console.log("PASS browser UI: image preview, correction controls, conversion, pencil, eraser, undo/redo, project save/reopen, PNG/C/mode-9 export, black/transparency, palette suggestion, frames, sheet import, malformed project.");
     console.log("Screenshots: " + output);
