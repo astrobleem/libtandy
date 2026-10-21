@@ -21,6 +21,7 @@
   let pendingImage = null;
   let pendingSourceName = "";
   let pendingFrameImages = null;
+  let pendingSpriteColors = null;
   let pendingKind = null;
   let pendingOriginalKind = null;
   let pendingRawPreview = null;
@@ -30,7 +31,8 @@
   function dimensions() { return mode() === "sprite" ? [8, 8] : [Core.WIDTH, Core.HEIGHT]; }
   function currentFrame() { return project.frames[frameIndex]; }
   function activeInk() { return mode() === "sprite" ? selectedSlot : selectedColor; }
-  function activePaletteColor() { return mode() === "sprite" ? project.spriteColors[selectedSlot - 1] : selectedColor; }
+  function effectiveSpriteColors() { return pendingSpriteColors || project.spriteColors; }
+  function activePaletteColor() { return mode() === "sprite" ? effectiveSpriteColors()[selectedSlot - 1] : selectedColor; }
   function escapeHtml(text) {
     return String(text).replace(/[&<>"']/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[character]);
   }
@@ -40,6 +42,15 @@
     toast.classList.add("show");
     if (toastTimer) clearTimeout(toastTimer);
     toastTimer = setTimeout(() => toast.classList.remove("show"), 2400);
+  }
+  function clearPendingImport() {
+    pendingImage = null;
+    pendingFrameImages = null;
+    pendingSpriteColors = null;
+    $("pending-preview-wrap").hidden = true;
+    $("pending-image").textContent = "Import a picture to preview it here.";
+    $("pending-image").className = "pending-image";
+    $("apply-image").disabled = true;
   }
   function syncSaveLabel(message) {
     $("save-state").innerHTML = '<span class="status-dot"></span>' + escapeHtml(message || "Only on this device");
@@ -60,8 +71,10 @@
   function restoreSnapshot(serialized) {
     const data = JSON.parse(serialized);
     project = normalizeProject(data);
+    pendingSpriteColors = mode() === "sprite" ? project.spriteColors.slice() : null;
     frameIndex = Math.min(frameIndex, project.frames.length - 1);
     renderAll();
+    if (pendingImage) drawPendingPreview();
   }
   function pushUndo() {
     undoStack.push(snapshot());
@@ -110,6 +123,7 @@
     if (!data || !Array.isArray(data.frames) || data.frames.length < 1 || data.frames.length > 200) {
       throw new Error("That project needs between 1 and 200 frames.");
     }
+    if (data.mode != null && data.mode !== "sprite" && data.mode !== "screen") throw new Error("Choose either Sprite or Full screen mode.");
     const chosenMode = data.mode === "sprite" ? "sprite" : "screen";
     const [width, height] = chosenMode === "sprite" ? [8, 8] : [Core.WIDTH, Core.HEIGHT];
     const frames = data.frames.map((source, index) => {
@@ -125,17 +139,33 @@
       const input = Core.createFrame(sourceWidth, sourceHeight, 0, false);
       for (let p = 0; p < input.indices.length; p += 1) {
         const indexValue = Number(source.indices[p]);
-        if (!Number.isInteger(indexValue) || indexValue < 0 || indexValue > 15) throw new Error("Color index must be from 0 to 15.");
+        const maximumIndex = chosenMode === "sprite" ? 3 : 15;
+        if (!Number.isInteger(indexValue) || indexValue < 0 || indexValue > maximumIndex) {
+          throw new Error(chosenMode === "sprite" ? "Sprite color index must be from 0 to 3." : "Color index must be from 0 to 15.");
+        }
+        const alphaValue = source.alpha[p];
+        if (alphaValue !== 0 && alphaValue !== 1 && alphaValue !== false && alphaValue !== true) {
+          throw new Error("Pixel transparency must be either 0 or 1.");
+        }
+        if (chosenMode === "sprite" && (alphaValue === 1 || alphaValue === true) && indexValue === 0) {
+          throw new Error("Sprite index 0 is transparent. Use ink slot 1 for opaque black.");
+        }
         input.indices[p] = indexValue;
-        input.alpha[p] = source.alpha[p] ? 1 : 0;
+        input.alpha[p] = alphaValue ? 1 : 0;
       }
       return sourceWidth === width && sourceHeight === height ? input : resizeFrame(input, width, height);
     });
     const name = String(data.name || "untitled").slice(0, 48);
-    const spriteColors = [0, 1, 2].map((i) => Number.isInteger(data.spriteColors && data.spriteColors[i])
-      ? Math.max(0, Math.min(15, data.spriteColors[i])) : [14, 0, 15][i]);
+    const sourceSpriteColors = data.spriteColors == null ? [14, 0, 15] : data.spriteColors;
+    if (!Array.isArray(sourceSpriteColors) || sourceSpriteColors.length !== 3 ||
+        sourceSpriteColors.some((color) => !Number.isInteger(color) || color < 0 || color > 15)) {
+      throw new Error("A sprite palette needs exactly three Tandy colors from 0 to 15.");
+    }
+    const spriteColors = sourceSpriteColors.slice();
+    const background = data.screenBackground == null ? 0 : Number(data.screenBackground);
+    if (!Number.isInteger(background) || background < 0 || background > 15) throw new Error("Screen background color must be from 0 to 15.");
     return { version: 1, name, mode: chosenMode, frames, spriteColors,
-      screenBackground: Math.max(0, Math.min(15, Number(data.screenBackground) || 0)) };
+      screenBackground: background };
   }
 
   function makeExampleProject() {
@@ -169,8 +199,10 @@
       button.addEventListener("click", () => {
         transparentSelected = false;
         if (mode() === "sprite") {
+          $("lock-sprite-palette").checked = true;
           if (project.spriteColors[selectedSlot - 1] !== index) pushUndo();
           project.spriteColors[selectedSlot - 1] = index;
+          pendingSpriteColors = project.spriteColors.slice();
           document.querySelectorAll(".ink-slot").forEach((slot) => slot.classList.toggle("selected", Number(slot.dataset.slot) === selectedSlot));
         } else selectedColor = index;
         updatePalette();
@@ -180,7 +212,7 @@
         drawPendingPreview();
       });
       const selected = mode() === "sprite"
-        ? !transparentSelected && project.spriteColors[selectedSlot - 1] === index
+        ? !transparentSelected && effectiveSpriteColors()[selectedSlot - 1] === index
         : !transparentSelected && selectedColor === index;
       button.classList.toggle("selected", selected);
       paletteHost.appendChild(button);
@@ -198,7 +230,7 @@
       : "A full Tandy screen, ready to pack.";
     document.querySelectorAll(".ink-slot").forEach((slot) => {
       const i = Number(slot.dataset.slot) - 1;
-      slot.querySelector("i").style.backgroundColor = "rgb(" + Core.RGBI[project.spriteColors[i]].join(",") + ")";
+      slot.querySelector("i").style.backgroundColor = "rgb(" + Core.RGBI[effectiveSpriteColors()[i]].join(",") + ")";
       slot.classList.toggle("selected", Number(slot.dataset.slot) === selectedSlot);
     });
     const backgroundSelect = $("screen-background");
@@ -514,6 +546,7 @@
       try {
         const parsed = JSON.parse(await file.text());
         project = normalizeProject(parsed);
+        clearPendingImport();
         frameIndex = 0; undoStack = []; redoStack = [];
         renderAll(); syncSaveLabel("Project opened"); flash("Project opened in this browser");
       } catch (error) { flash(error.message || "This project could not be opened."); }
@@ -525,6 +558,7 @@
         if (bytes.length !== Core.BYTES) throw new Error("A mode-9 screen file must be exactly 32,768 bytes.");
         project = { version: 1, name: file.name.replace(/\.bin$/i, "").slice(0, 48), mode: "screen",
           frames: [Core.unpackMode9(bytes)], spriteColors: project.spriteColors.slice(), screenBackground: 0 };
+        clearPendingImport();
         frameIndex = 0; undoStack = []; redoStack = []; zoom = 1.5;
         renderAll(); syncSaveLabel("Mode-9 screen opened"); flash("32 KiB mode-9 screen opened");
       } catch (error) { flash(error.message || "This mode-9 screen could not be opened."); }
@@ -534,6 +568,7 @@
     const image = new Image();
     image.onload = () => {
       pendingImage = image;
+      pendingSpriteColors = null;
       pendingSourceName = file.name;
       pendingFrameImages = null;
       pendingOriginalKind = analyzeOriginalImage(image);
@@ -554,8 +589,7 @@
     const sample = document.createElement("canvas");
     sample.width = 128; sample.height = 128;
     const sampleCtx = sample.getContext("2d", { willReadFrequently: true });
-    sampleCtx.imageSmoothingEnabled = true;
-    sampleCtx.imageSmoothingQuality = "high";
+    sampleCtx.imageSmoothingEnabled = false;
     sampleCtx.clearRect(0, 0, 128, 128);
     sampleCtx.drawImage(image, 0, 0, 128, 128);
     const sampleData = sampleCtx.getImageData(0, 0, 128, 128);
@@ -588,11 +622,14 @@
     if (setting === "color") return { backgroundMode: "color", backgroundColor: activePaletteColor(), backgroundTolerance: Number($("key-tolerance").value) };
     return { backgroundMode: "preserve" };
   }
-  function convertImageData(imageData, opts) {
+  function importRgba(imageData, opts) {
     const rgba = new Uint8ClampedArray(imageData.data);
     if (opts.backgroundMode === "opaque") for (let p = 3; p < rgba.length; p += 4) rgba[p] = 255;
-    return Core.convertRgba(rgba, imageData.width, imageData.height, {
-      mode: mode(), spriteColors: project.spriteColors,
+    return rgba;
+  }
+  function conversionSettings(opts, spriteColors) {
+    return {
+      mode: mode(), spriteColors: spriteColors || project.spriteColors,
       dither: $("dither-mode").value, ditherStrength: Number($("dither-strength").value),
       recommendedDither: pendingKind && pendingKind.kind === "photo" ? "fs" : pendingKind && pendingKind.kind === "illustration" ? "ordered" : "none",
       pixelArt: !!(pendingKind && pendingKind.kind === "pixel-art"),
@@ -602,7 +639,11 @@
       gamma: Number($("gamma").value),
       backgroundMode: opts.backgroundMode, backgroundColor: opts.backgroundColor,
       backgroundTolerance: opts.backgroundTolerance
-    });
+    };
+  }
+  function convertImageData(imageData, opts, spriteColors) {
+    return Core.convertRgba(importRgba(imageData, opts), imageData.width, imageData.height,
+      conversionSettings(opts, spriteColors));
   }
   function drawFramePreview(target, frame) {
     const local = target.getContext("2d");
@@ -629,9 +670,20 @@
         rawCtx.drawImage(pendingImage, x, 0, 8, 8, 0, 0, 8, 8);
         const pixels = rawCtx.getImageData(0, 0, 8, 8);
         if (firstPixels === null) firstPixels = pixels;
-        frames.push(convertImageData(pixels, opts));
+        frames.push(pixels);
       }
-      return { frames, source: firstPixels };
+      const sources = frames.map((imageData) => importRgba(imageData, opts));
+      if ($("lock-sprite-palette").checked) pendingSpriteColors = project.spriteColors.slice();
+      else {
+        const combined = new Uint8ClampedArray(sources.reduce((total, source) => total + source.length, 0));
+        let offset = 0;
+        sources.forEach((source) => { combined.set(source, offset); offset += source.length; });
+        pendingSpriteColors = Core.recommendSpriteColors(combined, 8, 8 * frames.length,
+          conversionSettings(opts, project.spriteColors));
+      }
+      updatePalette();
+      const settings = conversionSettings(opts, pendingSpriteColors);
+      return { frames: sources.map((source) => Core.convertRgba(source, 8, 8, settings)), source: firstPixels };
     }
     pendingKind = pendingOriginalKind || { kind: "illustration", colors: 0, edgeRatio: 0 };
     $("dither-recommendation").textContent = autoChoiceLabel(pendingKind.kind);
@@ -640,7 +692,14 @@
     const pixelArt = !!(pendingKind && pendingKind.kind === "pixel-art");
     drawResizedSource(pendingImage, width, height, rawCtx, $("resize-mode").value, pixelArt);
     const source = rawCtx.getImageData(0, 0, width, height);
-    return { frames: [convertImageData(source, opts)], source };
+    if (mode() === "sprite") {
+      pendingSpriteColors = $("lock-sprite-palette").checked
+        ? project.spriteColors.slice()
+        : Core.recommendSpriteColors(importRgba(source, opts), width, height,
+          conversionSettings(opts, project.spriteColors));
+      updatePalette();
+    } else pendingSpriteColors = null;
+    return { frames: [convertImageData(source, opts, pendingSpriteColors || project.spriteColors)], source };
   }
   function drawPendingPreview() {
     if (!pendingImage) return;
@@ -655,7 +714,7 @@
       const previewScale = Math.min(230 / first.width, 100 / first.height);
       preview.style.width = Math.max(1, Math.round(first.width * previewScale)) + "px";
       preview.style.height = Math.max(1, Math.round(first.height * previewScale)) + "px";
-      renderFrameInto(preview.getContext("2d"), first);
+      renderFrameInto(preview.getContext("2d"), first, mode() === "sprite" ? pendingSpriteColors : null);
       const before = $("pending-source-preview");
       before.width = pendingRawPreview.width;
       before.height = pendingRawPreview.height;
@@ -709,14 +768,16 @@
     $("resize-mode").disabled = $("as-sprite-sheet").checked;
     drawPendingPreview();
   });
+  $("lock-sprite-palette").addEventListener("change", drawPendingPreview);
   $("apply-image").addEventListener("click", () => {
     if (!pendingFrameImages || !pendingFrameImages.length) return;
     pushUndo();
+    if (mode() === "sprite" && pendingSpriteColors) project.spriteColors = pendingSpriteColors.slice();
     project.frames = pendingFrameImages.map(cloneFrame);
     frameIndex = 0;
     project.name = pendingSourceName.replace(/\.[^.]+$/, "").slice(0, 48) || "imported-art";
     $("project-name").value = project.name;
-    drawFrames(); drawCanvas(); updateUsage();
+    updatePalette(); drawFrames(); drawCanvas(); updateUsage();
     flash("Picture converted to the Tandy palette");
   });
 

@@ -87,6 +87,7 @@
 
   const PALETTE_LINEAR = RGBI.map((rgb) => rgb.map(srgbToLinear));
   const PALETTE_OKLAB = PALETTE_LINEAR.map(linearToOklab);
+  const ALL_COLOR_INDICES = Array.from({ length: 16 }, (_, index) => index);
 
   function labDistanceSquared(a, b) {
     const l = a[0] - b[0]; const ca = a[1] - b[1]; const cb = a[2] - b[2];
@@ -111,6 +112,74 @@
   function percentile(sorted, proportion) {
     if (!sorted.length) return 0;
     return sorted[Math.min(sorted.length - 1, Math.floor((sorted.length - 1) * proportion))];
+  }
+
+  function finiteOption(options, key, fallback) {
+    if (options[key] == null || options[key] === "") return fallback;
+    const value = Number(options[key]);
+    return Number.isFinite(value) ? value : fallback;
+  }
+
+  /* Apply alpha/keying and all tone controls once, before any dither error is added. */
+  function prepareColorBuffer(rgba, width, height, options) {
+    const opts = options || {};
+    if (!rgba || rgba.length !== width * height * 4) throw new RangeError("Pixel data length does not match its dimensions.");
+    const pixelCount = width * height;
+    const work = new Float32Array(pixelCount * 3);
+    const opaque = new Uint8Array(pixelCount);
+    const lightnessValues = [];
+    const modeKey = opts.backgroundMode === "color";
+    const keyRgb = RGBI[Math.max(0, Math.min(15, finiteOption(opts, "backgroundColor", 0) | 0))];
+    const tolerance = Math.max(0, Math.min(255, finiteOption(opts, "backgroundTolerance", 0) | 0));
+    const alphaThreshold = Math.max(1, Math.min(255, finiteOption(opts, "alphaThreshold", 128) | 0));
+
+    for (let p = 0; p < pixelCount; p += 1) {
+      const q = p * 4;
+      const rgb8 = [rgba[q], rgba[q + 1], rgba[q + 2]];
+      const keyed = modeKey && colorDistanceSquared(rgb8, keyRgb) <= tolerance * tolerance * 3;
+      if (rgba[q + 3] < alphaThreshold || keyed) continue;
+      const offset = p * 3;
+      const linear = rgb8.map(srgbToLinear);
+      work[offset] = linear[0];
+      work[offset + 1] = linear[1];
+      work[offset + 2] = linear[2];
+      opaque[p] = 1;
+      lightnessValues.push(linearToOklab(linear)[0]);
+    }
+
+    const exposure = Math.max(-2, Math.min(2, finiteOption(opts, "exposure", 0)));
+    const contrast = Math.max(0, Math.min(2, finiteOption(opts, "contrast", 100) / 100));
+    const saturation = Math.max(0, Math.min(2, finiteOption(opts, "saturation", 100) / 100));
+    const gamma = Math.max(0.5, Math.min(2, finiteOption(opts, "gamma", 100) / 100));
+    let autoStrength = opts.autoCorrect && !opts.pixelArt
+      ? Math.max(0, Math.min(1, finiteOption(opts, "autoStrength", 0) / 100)) : 0;
+    let low = 0;
+    let high = 1;
+    if (autoStrength > 0 && lightnessValues.length > 1) {
+      lightnessValues.sort((a, b) => a - b);
+      low = percentile(lightnessValues, 0.01);
+      high = percentile(lightnessValues, 0.99);
+      if (high - low < 0.08) autoStrength = 0;
+    }
+
+    for (let p = 0; p < pixelCount; p += 1) {
+      if (!opaque[p]) continue;
+      const offset = p * 3;
+      const lab = linearToOklab([work[offset], work[offset + 1], work[offset + 2]]);
+      let light = lab[0];
+      if (autoStrength > 0 && high > low) {
+        const corrected = Math.max(0, Math.min(1, (light - low) / (high - low) * 0.92 + 0.04));
+        light += (corrected - light) * autoStrength;
+      }
+      light = Math.max(0, Math.min(1, light * Math.pow(2, exposure)));
+      light = Math.max(0, Math.min(1, (light - 0.5) * contrast + 0.5));
+      light = Math.max(0, Math.min(1, Math.pow(light, 1 / gamma)));
+      const corrected = oklabToLinear([light, lab[1] * saturation, lab[2] * saturation]);
+      work[offset] = corrected[0];
+      work[offset + 1] = corrected[1];
+      work[offset + 2] = corrected[2];
+    }
+    return { work, opaque };
   }
 
   function bayerThreshold(x, y) {
@@ -145,44 +214,16 @@
     const opts = options || {};
     const mode = opts.mode === "sprite" ? "sprite" : "screen";
     const spriteColors = (opts.spriteColors || [15, 12, 11]).map((c) => Math.max(0, Math.min(15, c | 0)));
-    if (rgba.length !== width * height * 4) throw new RangeError("Pixel data length does not match its dimensions.");
     const frame = createFrame(width, height, 0, false);
     const candidates = mode === "sprite" ? spriteColors : RGBI.map((_, i) => i);
     const pixelCount = width * height;
-    const work = new Float32Array(pixelCount * 3);
-    const opaque = new Uint8Array(pixelCount);
-    const originalLightness = [];
-    const modeKey = opts.backgroundMode === "color";
-    const keyRgb = RGBI[Math.max(0, Math.min(15, opts.backgroundColor | 0))];
-    const tolerance = Math.max(0, opts.backgroundTolerance | 0);
-    const alphaThreshold = opts.alphaThreshold == null ? 128 : opts.alphaThreshold;
-    const exposure = Math.max(-2, Math.min(2, Number(opts.exposure) || 0));
-    const contrast = Math.max(0, Math.min(2, (Number(opts.contrast) || 100) / 100));
-    const saturationValue = opts.saturation == null ? 100 : Number(opts.saturation);
-    const saturation = Math.max(0, Math.min(2, saturationValue / 100));
-    const gamma = Math.max(0.5, Math.min(2, (Number(opts.gamma) || 100) / 100));
-    let autoStrength = opts.autoCorrect && !opts.pixelArt ? Math.max(0, Math.min(1, (Number(opts.autoStrength) || 0) / 100)) : 0;
-    for (let p = 0; p < pixelCount; p += 1) {
-      const q = p * 4;
-      const rgb8 = [rgba[q], rgba[q + 1], rgba[q + 2]];
-      const keyed = modeKey && colorDistanceSquared(rgb8, keyRgb) <= tolerance * tolerance * 3;
-      if (rgba[q + 3] < alphaThreshold || keyed) continue;
-      const linear = rgb8.map((value) => srgbToLinear(value));
-      work[p * 3] = linear[0]; work[p * 3 + 1] = linear[1]; work[p * 3 + 2] = linear[2];
-      opaque[p] = 1;
-      originalLightness.push(linearToOklab(linear)[0]);
-    }
-    let low = 0; let high = 1;
-    if (autoStrength > 0 && originalLightness.length > 1) {
-      originalLightness.sort((a, b) => a - b);
-      low = percentile(originalLightness, 0.01);
-      high = percentile(originalLightness, 0.99);
-      if (high - low < 0.08) autoStrength = 0;
-    }
+    const prepared = prepareColorBuffer(rgba, width, height, opts);
+    const work = prepared.work;
+    const opaque = prepared.opaque;
     const automatic = opts.dither === "auto";
-    const ditherMode = automatic ? (opts.recommendedDither || (opts.pixelArt ? "none" : "fs"))
+    const ditherMode = automatic ? (opts.pixelArt ? "none" : (opts.recommendedDither || "fs"))
       : (opts.dither === true ? "fs" : (opts.dither || "none"));
-    const ditherStrength = Math.max(0, Math.min(1, (Number(opts.ditherStrength) || 0) / 100));
+    const ditherStrength = Math.max(0, Math.min(1, finiteOption(opts, "ditherStrength", 0) / 100));
     const mapErrorStrength = ditherStrength;
     function spreadError(nx, ny, weight, error) {
       if (nx < 0 || nx >= width || ny >= height) return;
@@ -202,19 +243,6 @@
         if (!opaque[p]) { frame.indices[p] = 0; frame.alpha[p] = 0; continue; }
         let linear = [work[p * 3], work[p * 3 + 1], work[p * 3 + 2]];
         let lab = linearToOklab(linear);
-        if (autoStrength > 0 || exposure !== 0 || contrast !== 1 || saturation !== 1 || gamma !== 1) {
-          let light = lab[0];
-          if (autoStrength > 0 && high > low) {
-            const corrected = Math.max(0, Math.min(1, (light - low) / (high - low) * 0.92 + 0.04));
-            light += (corrected - light) * autoStrength;
-          }
-          light = Math.max(0, Math.min(1, light * Math.pow(2, exposure)));
-          light = Math.max(0, Math.min(1, (light - 0.5) * contrast + 0.5));
-          light = Math.max(0, Math.min(1, Math.pow(light, 1 / gamma)));
-          lab = [light, lab[1] * saturation, lab[2] * saturation];
-          linear = oklabToLinear(lab);
-          lab = linearToOklab(linear);
-        }
         if (ditherMode === "ordered" && ditherStrength > 0) {
           const offset = bayerThreshold(x, y) * 0.26 * ditherStrength;
           linear = linear.map((channel) => Math.max(0, Math.min(1, channel + offset)));
@@ -234,6 +262,62 @@
       }
     }
     return frame;
+  }
+
+  /* Choose a three-ink palette by minimizing total OKLab error over the 16 RGBI colors. */
+  function recommendSpriteColors(rgba, width, height, options) {
+    const opts = options || {};
+    const prepared = prepareColorBuffer(rgba, width, height, opts);
+    const labs = [];
+    const counts = new Uint32Array(16);
+    for (let p = 0; p < prepared.opaque.length; p += 1) {
+      if (!prepared.opaque[p]) continue;
+      const offset = p * 3;
+      const lab = linearToOklab([prepared.work[offset], prepared.work[offset + 1], prepared.work[offset + 2]]);
+      labs.push(lab);
+      const closest = nearestLab(lab, ALL_COLOR_INDICES);
+      counts[closest] += 1;
+    }
+    const fallback = (opts.spriteColors || [14, 0, 15]).map((c) => Math.max(0, Math.min(15, c | 0)));
+    if (!labs.length) return fallback.slice(0, 3);
+
+    const individuallyBest = Array.from(counts.keys()).filter((index) => counts[index] > 0)
+      .sort((a, b) => counts[b] - counts[a] || a - b);
+    if (individuallyBest.length <= 3) {
+      const selected = individuallyBest.slice();
+      for (const index of fallback) if (selected.length < 3 && !selected.includes(index)) selected.push(index);
+      for (let index = 0; selected.length < 3 && index < 16; index += 1) if (!selected.includes(index)) selected.push(index);
+      return selected;
+    }
+
+    const distances = new Float32Array(labs.length * 16);
+    for (let p = 0; p < labs.length; p += 1) {
+      for (let color = 0; color < 16; color += 1) {
+        distances[p * 16 + color] = labDistanceSquared(labs[p], PALETTE_OKLAB[color]);
+      }
+    }
+    let best = [0, 1, 2];
+    let bestScore = Infinity;
+    for (let a = 0; a < 14; a += 1) for (let b = a + 1; b < 15; b += 1) for (let c = b + 1; c < 16; c += 1) {
+      let score = 0;
+      for (let p = 0; p < labs.length; p += 1) {
+        const offset = p * 16;
+        score += Math.min(distances[offset + a], distances[offset + b], distances[offset + c]);
+      }
+      if (score < bestScore) { bestScore = score; best = [a, b, c]; }
+    }
+    const useCounts = new Uint32Array(16);
+    for (let p = 0; p < labs.length; p += 1) {
+      const offset = p * 16;
+      let chosen = best[0];
+      let distance = distances[offset + chosen];
+      for (let i = 1; i < best.length; i += 1) {
+        const next = best[i];
+        if (distances[offset + next] < distance) { chosen = next; distance = distances[offset + next]; }
+      }
+      useCounts[chosen] += 1;
+    }
+    return best.sort((a, b) => useCounts[b] - useCounts[a] || a - b);
   }
 
   function packMode9(frame, transparentColor) {
@@ -280,7 +364,14 @@
     for (let y = 0; y < 8; y += 1) {
       for (let x = 0; x < 8; x += 1) {
         const p = y * 8 + x;
-        const index = frame.alpha[p] ? frame.indices[p] & 3 : 0;
+        const sourceIndex = frame.indices[p];
+        if (!Number.isInteger(sourceIndex) || sourceIndex < 0 || sourceIndex > 3) {
+          throw new RangeError("Sprite color indices must be from 0 to 3.");
+        }
+        if (frame.alpha[p] && sourceIndex === 0) {
+          throw new RangeError("Sprite index 0 is transparent; use ink slot 1 for opaque black.");
+        }
+        const index = frame.alpha[p] ? sourceIndex : 0;
         const bit = 0x80 >> x;
         if (index & 1) plane0[y] |= bit;
         if (index & 2) plane1[y] |= bit;
@@ -375,7 +466,7 @@
 
   return {
     WIDTH, HEIGHT, BYTES, RGBI, RGBI_NAMES, createFrame, pixelOffset, mode9Offset,
-    nearestColor, detectImageKind, srgbToLinear, linearToOklab, convertRgba, packMode9, unpackMode9,
+    nearestColor, detectImageKind, srgbToLinear, linearToOklab, convertRgba, recommendSpriteColors, packMode9, unpackMode9,
     encodeSpritePlanes, decodeSpritePlanes, cleanName,
     exportSpriteHeader, exportScreenHeader
   };

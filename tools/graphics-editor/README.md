@@ -39,6 +39,8 @@ The palette has a separate **T · Transparent** choice. RGBI color 0 is ordinary
 
 You can change the preview background between a checkerboard, warm paper, dark, and blue. The screen exporter fills transparent screen pixels with the selected solid background color because the mode-9 framebuffer itself has no alpha channel.
 
+For sprite imports, the editor evaluates the visible pixels across all frames and suggests three RGBI inks that minimize total OKLab color error. Turn on **Lock these ink colors** to keep your own palette; picking a palette color turns the lock on for you. Transparency remains separate from the three inks.
+
 ### Supported sample pictures
 
 Open these files from `examples/` with **Import picture**:
@@ -93,7 +95,9 @@ Run the conversion and export checks from this folder:
 node tests/core.test.cjs
 ```
 
-The checks exercise all 16 RGBI colors, transparency versus opaque black, sprite planes, nibble order, bank starts and edges, screen packing and round-trip, pixel-art/photo/illustration classification, and both dithering modes. If `C:\WATCOM\BINNT\wcl.exe` and `wcl386.exe` exist, the same command compiles the generated headers with the repository's 16-bit DOS memory model and the 32-bit Open Watcom compiler, then runs the 32-bit integration program against the real libtandy graphics core.
+The checks cover all 16 RGBI colors, transparent versus opaque black, sprite planes, nibble order, bank edges, full-screen round-trip, corrected-ramp dithering, sprite palette search, and per-pixel plus 8x8 tone-error comparisons on photo-like, gradient, and pixel-art samples. The generated-C check compiles and runs headers against the actual libtandy core with Open Watcom C32 and, when available, compiles the same output for the 16-bit DOS memory model.
+
+`node tests/ui.test.cjs` is a dependency-free browser smoke test. It uses an already-installed Chrome or Edge, exercises the import-to-export workflow, checks transparency and palette behavior, tests the frame strip and malformed-project handling, and saves page screenshots. Set `CHROME_PATH` only when the browser is installed in a nonstandard location; `LIBTANDY_QA_OUTPUT` can select an output folder. The test keeps the browser's normal sandbox enabled and requests software rendering for headless capture.
 
 ## Notes
 
