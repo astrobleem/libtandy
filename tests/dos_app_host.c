@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: MIT */
 #include <stdio.h>
 #include "lt_dos_app.h"
+#include "../examples/dos_demo_motion.h"
 
 void ltdp_fake_reset(void);
 void ltdp_fake_fail_mode(int fail);
@@ -27,10 +28,13 @@ static int same_video(const lt_dos_video_state *a,
 
 int main(void)
 {
-    lt_dos_app app;
+    lt_dos_app app = LT_DOS_APP_INITIALIZER;
     lt_dos_video_state before, after;
     unsigned i, sound_before, frame;
     int failures = 0;
+
+    CHECK(dos_demo_next_x(303U) == 304U);
+    CHECK(dos_demo_next_x(304U) == 8U);
 
     /* Successful init owns mode 9, the direct aperture, and all sound channels. */
     ltdp_fake_reset();
@@ -42,9 +46,19 @@ int main(void)
     CHECK(app.sound_port == LT_DOS_APP_SOUND_PORT);
     CHECK(app.input.mouse_enabled == 0U && app.input.mouse_seen == 0U);
     for (i = 0; i < 4U; ++i) CHECK(app.chip.owner[i] == LT_DOS_APP_SOUND_OWNER);
+    CHECK(ltdp_fake_sound_count() == 4U);
+    for (i = 0; i < 4U; ++i)
+        CHECK(ltdp_fake_sound_byte(i) ==
+              (unsigned char)(144U | (i << 5) | 15U));
     ltdp_fake_video_state(&after);
     CHECK(after.mode == 9U);
     CHECK(after.cursor_start == 0x20U);
+    sound_before = ltdp_fake_sound_count();
+    CHECK(lt_dos_app_init(&app) == LT_DOS_APP_INVALID);
+    CHECK(app.initialized == 1U);
+    CHECK(ltdp_fake_sound_count() == sound_before);
+    ltdp_fake_video_state(&after);
+    CHECK(after.mode == 9U);
 
     /* A normal loop exit can always mute audio and give BIOS video state back. */
     CHECK(lt_tone(&app.chip, LT_DOS_APP_SOUND_OWNER, 0U, 256U, 1));
@@ -99,6 +113,6 @@ int main(void)
     CHECK(ltdp_fake_restore_count() == 1U);
 
     if (failures) return 1;
-    puts("DOS app lifecycle passed init, rollback, loop exit, ownership");
+    puts("DOS app lifecycle and demo coordinate wrap passed");
     return 0;
 }

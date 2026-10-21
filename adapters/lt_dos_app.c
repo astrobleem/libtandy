@@ -25,9 +25,11 @@ lt_dos_app_status lt_dos_app_init(lt_dos_app *app)
     int video_saved = 0;
     int video_touched = 0;
     int sound_claimed = 0;
+    unsigned i;
     lt_gfx_u8 LT_GFX_FAR *aperture;
 
     if (app == 0) return LT_DOS_APP_INVALID;
+    if (app->initialized != 0U) return LT_DOS_APP_INVALID;
     memset(app, 0, sizeof(*app));
 
     if (!ltdp_video_snapshot(&app->previous_video))
@@ -57,6 +59,14 @@ lt_dos_app_status lt_dos_app_init(lt_dos_app *app)
         return LT_DOS_APP_AUDIO_FAILED;
     }
     sound_claimed = 1;
+    for (i = 0; i < 4U; ++i) {
+        if (!lt_attenuate(&app->chip, LT_DOS_APP_SOUND_OWNER, (lt_u8)i,
+                          15U, 1)) {
+            lt_dos_app_restore(app, video_saved, video_touched,
+                               sound_claimed);
+            return LT_DOS_APP_AUDIO_FAILED;
+        }
+    }
 
     /* This state is caller-owned; input setup installs no system hook. */
     memset(&app->input, 0, sizeof(app->input));

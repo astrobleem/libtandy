@@ -18,6 +18,7 @@ typedef enum {
 #define LT_DOS_APP_SOUND_OWNER 1U
 #define LT_DOS_APP_SOUND_MASK 15U
 #define LT_DOS_APP_SOUND_PORT 0x00C0U
+#define LT_DOS_APP_INITIALIZER { 0 }
 
 typedef struct {
     unsigned char mode;
@@ -40,13 +41,16 @@ typedef struct {
     unsigned char initialized;
 } lt_dos_app;
 
-/* Enters mode 9, hides the text cursor, binds the direct video aperture,
- * initializes BIOS input state, and claims the four sound channels.
- * No allocation or resident service is used. Call only on an inactive object. */
+/* Declare the object with LT_DOS_APP_INITIALIZER before the first call.
+ * Enters mode 9, hides the text cursor, binds the direct video aperture,
+ * initializes BIOS input state, claims all sound channels, and mutes them.
+ * No allocation or resident service is used. Returns INVALID without changing
+ * an already-active object; call only on an initialized inactive object. */
 lt_dos_app_status lt_dos_app_init(lt_dos_app *app);
 
-/* Mutes/unclaims sound, clears local input state, restores video mode/page and
- * cursor position/shape. Safe to call after a failed init or more than once. */
+/* Mutes/releases owned sound channels, clears local input state, and restores
+ * video mode/page and cursor position/shape. Safe after failed init and
+ * repeated shutdown, provided the object was initialized as documented. */
 void lt_dos_app_shutdown(lt_dos_app *app);
 
 #endif
