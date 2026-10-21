@@ -1,10 +1,12 @@
 # Graphics Workshop for libtandy
 
-A small, dependency-free browser editor for Tandy mode-9 screens and libtandy's 8×8 sprites. It runs locally in a current browser. Imported pictures and work stay in the browser; the editor makes no network requests and does not upload files.
+**[Open the web app](https://astrobleem.github.io/libtandy/)** — no installation required.
+
+A small, dependency-free browser editor for Tandy mode-9 screens and libtandy's 8×8 sprites. It runs in a current browser and is also available for local use. Imported pictures and work stay in the browser; the editor makes no network requests and does not upload files.
 
 ## Start here
 
-1. Open `index.html` in a current Chrome, Edge, Firefox, or Safari browser. If your browser blocks local files, start the optional local server below.
+1. Open the web app above, or open `index.html` in a current Chrome, Edge, Firefox, or Safari browser to run it locally. If your browser blocks local files, start the optional local server below.
 2. Choose **Sprite · 8 × 8** or **Full screen · 320 × 200**.
 3. Click **Import picture**. PNG, JPEG, WebP, SVG, saved `.tandy.json` projects, and the editor's raw 32,768-byte mode-9 `.bin` export are supported. You can also choose **Try the example** to edit the built-in fox.
 4. Choose **Fit**, **Fill & crop**, or **Stretch** and adjust the live color preview. The before and after samples are shown together.
