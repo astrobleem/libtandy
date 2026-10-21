@@ -1,6 +1,6 @@
 # Graphics Workshop for libtandy
 
-A small, dependency-free browser editor for Tandy mode-9 screens and libtandy's 8×8 sprites. It runs locally in a current browser. Imported pictures and work stay in the browser; the editor makes no network requests and does not upload files.
+A small, dependency-free browser editor for Tandy mode-9 screens and libtandy's 8×8 sprites. It runs locally in a current browser. Imported pictures and work stay in the browser; the editor makes no network requests and does not upload files. You can also [open the online editor](https://astrobleem.github.io/libtandy/).
 
 ## Start here
 
