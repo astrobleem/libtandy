@@ -1,0 +1,205 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f5f2e9">
+  <title>Graphics Workshop · libtandy</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <a class="brand" href="#" aria-label="Graphics Workshop home">
+        <span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+        <span><strong>Graphics Workshop</strong><small>for libtandy</small></span>
+      </a>
+      <div class="project-title-wrap">
+        <label class="sr-only" for="project-name">Artwork name</label>
+        <input id="project-name" class="project-title" type="text" value="little-fox" maxlength="48" aria-label="Artwork name">
+        <span id="save-state" class="save-state"><span class="status-dot"></span>Only on this device</span>
+      </div>
+      <div class="top-actions">
+        <button id="undo" class="icon-button" type="button" title="Undo (Ctrl+Z)" aria-label="Undo">↶</button>
+        <button id="redo" class="icon-button" type="button" title="Redo (Ctrl+Y)" aria-label="Redo">↷</button>
+        <span class="top-divider"></span>
+        <button id="open-project" class="button button-light" type="button">Open project</button>
+        <button id="save-project" class="button button-dark" type="button">Save project</button>
+      </div>
+    </header>
+
+    <main class="layout">
+      <aside class="left-rail">
+        <div class="section-label">START HERE</div>
+        <button id="import-image" class="primary-action" type="button">
+          <span class="action-icon">↥</span><span><strong>Import picture</strong><small>PNG, JPG or WebP</small></span>
+        </button>
+        <button id="load-example" class="secondary-action" type="button">
+          <span class="action-icon sample-icon">✳</span><span><strong>Try the example</strong><small>A tiny, editable sprite</small></span>
+        </button>
+        <input id="file-picker" type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml,application/json,.json,application/octet-stream,.bin" hidden>
+
+        <div class="rail-separator"></div>
+        <div class="section-label">WHAT ARE YOU MAKING?</div>
+        <label class="field-label" for="asset-mode">Artwork type</label>
+        <select id="asset-mode" class="select-field">
+          <option value="screen">Full screen · 320 × 200</option>
+          <option value="sprite">Sprite · 8 × 8</option>
+        </select>
+        <p id="mode-help" class="hint">A full Tandy screen, ready to pack.</p>
+
+        <div class="rail-separator"></div>
+        <div class="section-heading"><span class="section-label">DRAWING TOOLS</span><span class="shortcut-note">P · E · F · I</span></div>
+        <div class="tool-grid" role="toolbar" aria-label="Drawing tools">
+          <button class="tool-button active" data-tool="pencil" type="button" title="Pencil (P)"><span>✎</span><small>Pencil</small></button>
+          <button class="tool-button" data-tool="eraser" type="button" title="Eraser (E)"><span>▱</span><small>Eraser</small></button>
+          <button class="tool-button" data-tool="fill" type="button" title="Fill (F)"><span>◩</span><small>Fill</small></button>
+          <button class="tool-button" data-tool="eyedropper" type="button" title="Eyedropper (I)"><span>⌕</span><small>Pick</small></button>
+        </div>
+
+        <div class="rail-separator"></div>
+        <div class="section-heading"><span class="section-label">COLOR PALETTE</span><span class="color-count">16 colors</span></div>
+        <div id="sprite-ink-picker" class="sprite-ink-picker" hidden>
+          <span class="field-label">Choose an ink slot</span>
+          <div class="ink-slots" role="group" aria-label="Sprite ink slots">
+            <button type="button" data-slot="1" class="ink-slot selected" title="Sprite ink 1">1 <i></i></button>
+            <button type="button" data-slot="2" class="ink-slot" title="Sprite ink 2">2 <i></i></button>
+            <button type="button" data-slot="3" class="ink-slot" title="Sprite ink 3">3 <i></i></button>
+          </div>
+          <label class="palette-lock" title="When unchecked, each imported picture gets a suggested three-color palette.">
+            <input id="lock-sprite-palette" type="checkbox">
+            <span><strong>Lock these ink colors</strong><small>Off: suggest colors for each new picture.</small></span>
+          </label>
+        </div>
+        <button id="transparent-swatch" class="transparent-swatch" type="button" title="Transparent pixel: show the background through it">
+          <span class="checker-chip" aria-hidden="true">T</span><span><strong>Transparent</strong><small>Shows the background through</small></span>
+        </button>
+        <div id="palette" class="palette-grid" role="group" aria-label="Tandy 16-color palette"></div>
+        <p class="tip-note"><strong>Black is a real color.</strong> Use the black swatch to paint opaque black. The separate T swatch is see-through.</p>
+      </aside>
+
+      <section class="editor-area" aria-label="Pixel editor">
+        <div class="editor-header">
+          <div>
+            <div class="eyebrow">YOUR CANVAS</div>
+            <h1 id="canvas-title">Full screen <span>320 × 200</span></h1>
+          </div>
+          <div class="canvas-controls">
+            <label class="preview-control"><span>Preview on</span>
+              <select id="preview-background" aria-label="Preview background">
+                <option value="checker">Checkerboard</option>
+                <option value="paper">Warm paper</option>
+                <option value="dark">Dark</option>
+                <option value="blue">Blue</option>
+              </select>
+            </label>
+            <span class="control-divider"></span>
+            <button id="zoom-out" class="zoom-button" type="button" aria-label="Zoom out" title="Zoom out">−</button>
+            <span id="zoom-label" class="zoom-label">3×</span>
+            <button id="zoom-in" class="zoom-button" type="button" aria-label="Zoom in" title="Zoom in">+</button>
+            <button id="fit-canvas" class="fit-button" type="button" title="Fit the canvas in the workspace">Fit</button>
+          </div>
+        </div>
+
+        <div id="canvas-frame" class="canvas-frame">
+          <div id="canvas-stage" class="canvas-stage checkerboard">
+            <canvas id="art-canvas" width="320" height="200" tabindex="0" aria-label="Editable pixel canvas"></canvas>
+            <div id="empty-state" class="empty-state" hidden>
+              <div class="empty-icon">✳</div>
+              <strong>Start with a picture or the example</strong>
+              <span>Everything stays in this browser.</span>
+              <button id="empty-import" class="button button-dark" type="button">Choose a picture</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="canvas-footer">
+          <span id="canvas-dimensions" class="dimension-chip">320 × 200 px</span>
+          <span id="canvas-status" class="canvas-status">Ready to draw</span>
+          <span id="cursor-position" class="cursor-position">x — · y —</span>
+        </div>
+
+        <section class="frame-strip" aria-label="Frames">
+          <div class="frame-heading">
+            <div><div class="eyebrow">ANIMATION FRAMES</div><h2>Frames <span id="frame-count">1</span></h2></div>
+            <div class="frame-actions">
+              <button id="add-frame" class="small-button" type="button" title="Add a copy of the current frame">＋ Add frame</button>
+              <button id="remove-frame" class="small-button small-button-quiet" type="button" title="Remove the current frame">Remove</button>
+            </div>
+          </div>
+          <div id="frame-list" class="frame-list"></div>
+          <p class="frame-tip">Make a few frames for a simple animation, or import a horizontal row of 8×8 pictures as a sprite sheet.</p>
+        </section>
+      </section>
+
+      <aside class="right-rail">
+        <section class="panel-card">
+          <div class="panel-title"><span class="step-badge">1</span><div><h2>Make it fit</h2><p>Choose how your picture is resized.</p></div></div>
+          <label class="field-label" for="resize-mode">Picture sizing</label>
+          <select id="resize-mode" class="select-field">
+            <option value="fit">Fit · keep the whole picture</option>
+            <option value="fill">Fill & crop · use the whole canvas</option>
+            <option value="stretch">Stretch · fill exactly</option>
+              <option value="pixel">Pixel art · keep hard edges</option>
+          </select>
+          <label class="field-label" for="dither-mode">Color detail</label>
+          <select id="dither-mode" class="select-field" title="Automatic avoids dithering pixel art, and chooses a method for photos and illustrations.">
+            <option value="auto">Automatic · choose for this picture</option>
+            <option value="none">No dithering · clean color areas</option>
+            <option value="fs">Floyd–Steinberg · photo detail</option>
+            <option value="ordered">Bayer 8 × 8 · smooth illustration</option>
+          </select>
+          <p id="dither-recommendation" class="hint algorithm-hint">Auto detects pixel art, photos, and illustrations before choosing.</p>
+          <div class="field-row detail-strength-row"><label class="field-label" for="dither-strength">Dither strength</label><output id="dither-strength-value" for="dither-strength">65%</output></div>
+          <input id="dither-strength" class="range-field" type="range" min="0" max="100" value="65">
+          <label class="check-row auto-correct-row"><input id="auto-correct" type="checkbox" checked><span><strong>Automatic color correction</strong><small>Gently balance light and dark tones</small></span><span class="info-dot" title="Uses the image's tone range to gently improve contrast. Automatic correction is skipped for detected pixel art.">i</span></label>
+          <div class="field-row correction-strength-row"><label class="field-label" for="auto-strength">Correction strength</label><output id="auto-strength-value" for="auto-strength">35%</output></div>
+          <input id="auto-strength" class="range-field" type="range" min="0" max="100" value="35">
+          <details class="manual-color-controls">
+            <summary>Adjust color by hand <span>Exposure · contrast · color · gamma</span></summary>
+            <div class="manual-slider"><div class="field-row"><label for="exposure">Exposure</label><output id="exposure-value">0</output></div><input id="exposure" type="range" min="-100" max="100" value="0"></div>
+            <div class="manual-slider"><div class="field-row"><label for="contrast">Contrast</label><output id="contrast-value">100%</output></div><input id="contrast" type="range" min="50" max="150" value="100"></div>
+            <div class="manual-slider"><div class="field-row"><label for="saturation">Saturation</label><output id="saturation-value">100%</output></div><input id="saturation" type="range" min="0" max="200" value="100"></div>
+            <div class="manual-slider"><div class="field-row"><label for="gamma">Gamma</label><output id="gamma-value">100%</output></div><input id="gamma" type="range" min="50" max="150" value="100"></div>
+          </details>
+          <label class="field-label import-transparency-label" for="import-transparency">Transparent pixels in picture</label>
+          <select id="import-transparency" class="select-field">
+            <option value="preserve">Keep image transparency</option>
+            <option value="color">Make chosen color transparent</option>
+            <option value="opaque">Treat every pixel as solid</option>
+          </select>
+          <div class="field-row"><label class="field-label" for="key-tolerance">Color match wiggle room</label><output id="tolerance-value" for="key-tolerance">0</output></div>
+          <input id="key-tolerance" class="range-field" type="range" min="0" max="120" value="0" title="Allow similar colors to become transparent">
+          <label id="screen-background-wrap" class="field-label" for="screen-background">Fill transparent screen pixels with</label>
+          <select id="screen-background" class="select-field"></select>
+          <label id="sheet-wrap" class="check-row sheet-check"><input id="as-sprite-sheet" type="checkbox"><span><strong>Split a horizontal sprite sheet</strong><small>One 8 × 8 picture per frame</small></span></label>
+          <div id="pending-preview-wrap" class="pending-preview-wrap" hidden>
+            <div class="compare-previews">
+              <div class="preview-column"><div class="preview-caption">BEFORE <span>Resized original</span></div><div class="pending-preview-stage checkerboard"><canvas id="pending-source-preview" width="8" height="8" aria-label="Original picture after resizing"></canvas></div></div>
+              <div class="preview-column"><div class="preview-caption">AFTER <span>Tandy palette</span></div><div class="pending-preview-stage checkerboard"><canvas id="pending-preview" width="8" height="8" aria-label="Converted picture preview"></canvas></div></div>
+            </div>
+          </div>
+          <button id="apply-image" class="button button-accent full-width" type="button" disabled>Convert picture to colors</button>
+          <p id="pending-image" class="pending-image">Import an image to preview it here.</p>
+        </section>
+
+        <section class="panel-card export-card">
+          <div class="panel-title"><span class="step-badge step-badge-2">2</span><div><h2>Save your art</h2><p>Use it again or add it to your C project.</p></div></div>
+          <div class="export-list">
+            <button id="export-png" class="export-row" type="button"><span class="file-icon png">▧</span><span><strong>PNG picture</strong><small>See-through background included</small></span><span class="export-arrow">↓</span></button>
+            <button id="export-sheet" class="export-row" type="button"><span class="file-icon sheet">▦</span><span><strong>PNG frame sheet</strong><small>Frames side by side</small></span><span class="export-arrow">↓</span></button>
+            <button id="export-c" class="export-row" type="button"><span class="file-icon code">C</span><span><strong>C header for libtandy</strong><small id="c-export-caption">Packed 32 KiB screen data</small></span><span class="export-arrow">↓</span></button>
+            <button id="export-binary" class="export-row" type="button"><span class="file-icon binary">▤</span><span><strong>Mode-9 screen bytes</strong><small>Exactly 32,768 bytes</small></span><span class="export-arrow">↓</span></button>
+          </div>
+          <div class="advanced-export"><label><input id="show-advanced" type="checkbox"><span>Show advanced format details</span></label><p id="advanced-details" hidden></p></div>
+          <div class="usage-box"><div class="usage-heading"><span>QUICK START</span><button id="copy-snippet" type="button" title="Copy usage example">Copy</button></div><pre id="usage-snippet"></pre></div>
+          <p class="local-note"><span aria-hidden="true">●</span> Picture files are handled on this device. Nothing is uploaded.</p>
+        </section>
+      </aside>
+    </main>
+    <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  </div>
+  <script src="core.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

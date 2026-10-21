@@ -1,0 +1,20 @@
+<!-- Original vector illustration for color-mapping tests. -->
+<svg xmlns="http://www.w3.org/2000/svg" width="384" height="240" viewBox="0 0 384 240">
+  <defs>
+    <linearGradient id="evening" x2="0" y2="1"><stop stop-color="#352d66"/><stop offset=".55" stop-color="#bf6480"/><stop offset="1" stop-color="#f3bb78"/></linearGradient>
+    <linearGradient id="window" x2="0" y2="1"><stop stop-color="#fff1a8"/><stop offset="1" stop-color="#ec9c5f"/></linearGradient>
+  </defs>
+  <rect width="384" height="240" fill="url(#evening)"/>
+  <circle cx="282" cy="88" r="36" fill="#ffe09a"/>
+  <path d="M0 139q64-27 127 0t128 0 129 0v101H0Z" fill="#484f72"/>
+  <path d="M0 170h78v-52l38-31 39 31v52h49v-42l34-26 35 26v42h47v-65l31-29 33 29v135H0Z" fill="#252f4a"/>
+  <path d="M0 202h92v-53h47v53h49v-35h39v35h49v-61h49v61h59v38H0Z" fill="#1d293e"/>
+  <g fill="url(#window)">
+    <rect x="30" y="173" width="9" height="18"/><rect x="53" y="173" width="9" height="18"/>
+    <rect x="106" y="132" width="10" height="15"/><rect x="126" y="132" width="10" height="15"/>
+    <rect x="166" y="174" width="9" height="17"/><rect x="221" y="149" width="9" height="15"/>
+    <rect x="252" y="149" width="9" height="15"/><rect x="298" y="153" width="11" height="17"/>
+    <rect x="322" y="153" width="11" height="17"/><rect x="348" y="153" width="11" height="17"/>
+  </g>
+  <path d="M0 222q97-13 194 0t190 0v18H0Z" fill="#161f34"/>
+</svg>
