@@ -1,4 +1,0 @@
-# Preserve frozen opt9 core bytes, including each file's original line endings.
-*.C -text
-*.H -text
-CORE-MIT.TXT -text
