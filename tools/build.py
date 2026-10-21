@@ -65,7 +65,12 @@ def main():
             run([*flags, '-c', source], source.stem)
         run([*flags, '-k4096', '-fe=DEMO.EXE',
              ROOT / 'examples/dos_demo.c', ROOT / 'src/lt_chip.c',
-             ROOT / 'src/lt_gfx.c', ROOT / 'adapters/lt_dos.c'], 'demo')
+             ROOT / 'src/lt_gfx.c', ROOT / 'src/lt_event.c',
+             ROOT / 'src/lt_time.c', ROOT / 'adapters/lt_dos.c',
+             ROOT / 'adapters/lt_input_dos.c',
+             ROOT / 'adapters/lt_time_dos.c',
+             ROOT / 'adapters/lt_dos_app.c',
+             ROOT / 'adapters/lt_dos_app_dos.c'], 'demo')
     for name, (test, modules) in TESTS.items():
         sources = [ROOT / 'src' / (module + '.c') for module in modules]
         sources.append(ROOT / 'tests' / (test + '.c'))
@@ -78,6 +83,24 @@ def main():
                  '-o', program], name + ' compile')
             result = run([program], name + ' run')
             print(result.stdout.strip())
+    if args.target == 'dos':
+        run([*flags, '-k4096', '-fe=DOSAPP.EXE',
+             ROOT / 'tests/dos_app_dos.c', ROOT / 'src/lt_chip.c',
+             ROOT / 'src/lt_gfx.c', ROOT / 'adapters/lt_dos.c',
+             ROOT / 'adapters/lt_dos_app.c',
+             ROOT / 'adapters/lt_dos_app_dos.c'], 'dos_app')
+    else:
+        program = out / ('dos_app_host.exe' if os.name == 'nt'
+                         else 'dos_app_host')
+        sources = [ROOT / 'src/lt_chip.c', ROOT / 'src/lt_gfx.c',
+                   ROOT / 'adapters/lt_dos_app.c',
+                   ROOT / 'tests/dos_app_host.c',
+                   ROOT / 'tests/dos_app_platform_fake.c']
+        run([args.cc, '-std=c89', '-pedantic-errors', '-Wall', '-Wextra',
+             '-Werror', '-O2', '-I' + str(ROOT / 'include'), *sources,
+             '-o', program], 'dos_app compile')
+        result = run([program], 'dos_app run')
+        print(result.stdout.strip())
     print('PASS ' + args.target + (' build only' if args.target == 'dos'
                                    else ' build and host tests'))
 

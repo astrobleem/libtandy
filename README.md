@@ -18,6 +18,7 @@ The existing MIT copyright and permission notice are retained verbatim in
 | --- | --- |
 | `lt_sound.h`, `lt_chip.c`, DOS sink | Caller owns hardware exclusion and scheduling. Owner tokens track channels; they do not arbitrate against other applications. Stop mutes before unclaim. |
 | `lt_gfx.h`, `lt_gfx.c` | Caller supplies a valid 32 KiB packed four-bank mode-9 aperture. No mode switch, allocation or resident service in the raster core. |
+| `lt_dos_app.h` (optional) | Foreground convenience setup for mode 9, the direct video aperture, BIOS input state and the default Tandy sound port. Saves/restores video page and cursor; no allocation or resident service. |
 | `lt_gfx_sprite8.h` | Index 0 is transparent; nonzero indices mapped to black remain opaque. Ordered destination overlap is allowed; source/framebuffer aliasing is excluded. |
 | `lt_surface.h`, `lt_media.h` | Bounded caller-owned INDEX8 storage, clipping, blits and palettes. No SDL code or compatibility claim. |
 | `lt_event.h`, DOS input | Bounded foreground queue; BIOS press events and optional mouse snapshots. No key-up/held-state guarantee, installed ISR or mouse callback. |
@@ -42,10 +43,34 @@ python tools/build.py --target dos --watcom C:/WATCOM
 This compiles the modules for real-mode DOS with Open Watcom `-0 -ms -ecc`,
 builds `build/dos/DEMO.EXE` and the DOS unit-test executables, and does not run
 them or start an emulator. The code targets 8086/8088, not 186/286 instructions.
-In DOS on a compatible Tandy, `DEMO` enters mode 9, draws an original glyph,
-plays a tone and restores the prior video mode/mutes when a key is pressed.
-It requires exclusive foreground ownership of the hardware. Do not run this
-DOS example as a normal Windows executable.
+In DOS on a compatible Tandy, `DEMO` enters mode 9, polls BIOS key presses,
+moves an original square, plays a tone and restores the prior video mode,
+page, cursor and sound state when Escape is pressed. It requires exclusive
+foreground ownership of the hardware. Do not run this DOS example as a normal
+Windows executable.
+
+## Quickstart
+
+`lt_dos_app_init()` is an optional convenience entry point for a small
+foreground DOS program. It saves the current video mode/page and cursor,
+enters mode 9, points `app.screen` at the direct video aperture, initializes
+the per-app input state and claims the four sound channels. It allocates no
+memory and installs no interrupt handler. Always call `lt_dos_app_shutdown()`
+after a successful init; shutdown also handles a failed or repeated call
+safely.
+
+See [`examples/dos_demo.c`](examples/dos_demo.c) for a commented runnable
+loop. It shows input polling, an update, direct drawing and an explicit coarse
+delay. Escape quits. The delay uses DOS BIOS ticks and does not set a fixed
+frame rate. BIOS input reports press events only: it does not provide key-up
+or held-key state. The example assumes the normal DOS BIOS clock remains in
+place; programs that replace that clock need their own timing.
+
+The app object owns the chip/input state and borrows the hardware video
+aperture. Keep the object at the same address until shutdown, do not copy it
+while initialized, and keep the app in the foreground. Low-level `lt_gfx_*`,
+`lti_dos_*` and `lt_*` sound calls remain available when an application wants
+to manage each resource itself.
 
 Portable host unit tests with a C89 compiler:
 
