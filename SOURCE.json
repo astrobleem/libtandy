@@ -1,6 +1,6 @@
 {
   "source_revision": "d633d25b6bfd9f56105acdd2e86f960c8db3efb5",
-  "edition": "First-party MIT DOS and portable modules; GPL RPI1 extraction, Win16 and private runtime/evidence excluded",
+  "edition": "First-party MIT DOS/portable modules and caller-ticked native audio APIs; separate GPL-3.0-only JAWS-derived sample assets; GPL RPI1 extraction, Win16 and private runtime/evidence excluded",
   "files": {
     "LICENSE": {
       "source_lf_sha256": "1b7073ca79c0f526b7017032b475e99b0443ad0bac029169a2d646a12e533985",
@@ -113,6 +113,148 @@
     "tests/chip_core.c": {
       "source": "Independent chip_tests section of original MIT tests/test.c; RPI1 include and benchmark omitted",
       "license": "MIT (existing notice retained)"
+    }
+  },
+  "native_audio_integration": {
+    "base_commit": "151477effddb0e7d519a051f8d60e1ba7595496c",
+    "source_worktree_head": "3335a48fb8aab646c89a790ab0a9909d1b1dfb07",
+    "scope": "caller-ticked LTSCORE/1 static score and LTSFX_CLIP/2 short PSG clips with canonical LTSF/1 file I/O",
+    "midi": "Existing sound/ Standard MIDI parser/renderer and its fixtures are unchanged; no duplicate MIDI engine is added.",
+    "jaws_provenance": {
+      "source_commit": "b3660e0f5ccad401601bcb1ec30aae367b25b191",
+      "cues": {
+        "harpoon": "cue $0B at $9C66; 11 source frames",
+        "conch_pickup": "cue $15 at $A674; 65 source frames"
+      },
+      "tick_rate": "150247/2500 Hz",
+      "license": "GPL-3.0-only, restricted to examples/jaws and the DOS demo that embeds those tables"
+    },
+    "nyancat_upstream_check": {
+      "repository": "https://github.com/astrobleem/NyanCat-Tandy",
+      "branch": "main",
+      "commit": "2445730356dd900295640648f28aeef929bdfe7f",
+      "vendored_root": "third_party/libtandy",
+      "result": "The candidate shared audio/chip/score code, headers, clock helper, lt_sound.h, and DOS adapter match the exact NyanCat-Tandy public subset by raw tree blob IDs. For include/lt_audio.h and src/lt_audio.c, the candidate raw IDs match the public IDs exactly; the integration patch shows clean-filter IDs because this canonical repo normalizes C files through .gitattributes. The score documentation only adds the public-subset comparison section. NyanCat-Tandy does not contain LTSFX or the JAWS examples; those are additions in this integration.",
+      "compared_tree_blobs": {
+        "adapters/lt_dos.c": "0b987c4d28ad9908dd46af2d866f7f5862270f7f",
+        "include/lt_audio.h": "eb54817135ca7568bd08030d0c8e1082bc234005",
+        "include/lt_score.h": "d4df12543edda8294b6ad8523437cbe9de4d530a",
+        "include/lt_sound.h": "431c5d11527f8079c036ea8f346006007a8260c1",
+        "src/lt_audio.c": "d332a22b935a562adbd39f0354576bec61b97d78",
+        "src/lt_chip.c": "5a74c1e1909b42d36bfbc4dbf9f21f6b1d2a8017",
+        "src/lt_score.c": "0ae8448f9c6414c1e4b34096831946a9665a0d3e",
+        "src/lt_score_clock.h": "ced931fcab1e17be1b338a312c99c9fdb16c7a38"
+      },
+      "score_documentation_difference": {
+        "public_blob": "d6dc2e88a9b466512fa99cd3ac99e6dec65c10af",
+        "candidate_change": "Appended a short public vendored-subset comparison; the prior score documentation content is unchanged."
+      },
+      "audio_file_comparison": {
+        "method": "git hash-object --no-filters candidate bytes compared to the exact public Git tree blob IDs; ordinary git hash-object also recorded to show this repository\u2019s clean-filter view",
+        "files": {
+          "include/lt_audio.h": {
+            "public_tree_blob": "eb54817135ca7568bd08030d0c8e1082bc234005",
+            "candidate_raw_blob": "eb54817135ca7568bd08030d0c8e1082bc234005",
+            "candidate_clean_filter_blob": "ddf15f2b9841238c68792e5d325d94510363b6f3",
+            "crlf_lines": 108,
+            "diff": "empty"
+          },
+          "src/lt_audio.c": {
+            "public_tree_blob": "d332a22b935a562adbd39f0354576bec61b97d78",
+            "candidate_raw_blob": "d332a22b935a562adbd39f0354576bec61b97d78",
+            "candidate_clean_filter_blob": "f0ee4434634f10bba95ba4e69e591fc04e50ca7f",
+            "crlf_lines": 592,
+            "diff": "empty"
+          }
+        },
+        "patch_context": "integration.patch targets canonical libtandy main and is not a patch from the Nyan repository. Its displayed target blob IDs are clean-filter outputs, not public raw tree IDs."
+      }
+    },
+    "files": {
+      "README.md": {
+        "sha256": "65d3ef7d13db45ed5a7a9c443637ba4b707c3a3aba15a36fa61476d20010c084",
+        "license": "MIT"
+      },
+      "VALIDATION.md": {
+        "sha256": "ffbb8c96cc853ff3c404bea59bc482812dc12710c2f0bec64df6705bd7b77be7",
+        "license": "MIT"
+      },
+      "tools/build.py": {
+        "sha256": "2d45df4df33c8e18b999fbb37f43aee17418f33c09b46da9102c962e6a4939ab",
+        "license": "MIT"
+      },
+      "include/lt_audio.h": {
+        "sha256": "e343019497e5b23aaefd6d93f2a2de24a206c6a2543d75f524a8a81ab4d5e98f",
+        "license": "MIT"
+      },
+      "src/lt_audio.c": {
+        "sha256": "c0869860a031f8ced684725eb9464c2fd987f61ac9952a826fdbe41e3394c688",
+        "license": "MIT"
+      },
+      "include/lt_sfx.h": {
+        "sha256": "551ba2d907a22b4ce5edab1ec67e77130d681585fe388d6e1e07793165787d1b",
+        "license": "MIT"
+      },
+      "src/lt_sfx.c": {
+        "sha256": "c7246220199933f217a0bd396102815298032ad6e6e744d77c4fd40aebec6fe9",
+        "license": "MIT"
+      },
+      "include/lt_score.h": {
+        "sha256": "cd929d32c8fa38d4d88f821b84c988b9b74c9dd68dc994055c5fe1a65ee0e8e2",
+        "license": "MIT"
+      },
+      "src/lt_score.c": {
+        "sha256": "837aa6a5958cb1866eaa83a4655fa4d1ffe2b8efc4357577bb0391cc64367a53",
+        "license": "MIT"
+      },
+      "src/lt_score_clock.h": {
+        "sha256": "f9d96e9485a908b2bf48a654586dc4f55447d9a59e2bd80145a28e539a88dbe9",
+        "license": "MIT"
+      },
+      "tests/sfx_core.c": {
+        "sha256": "9ac39ccecefd39064386361a976d0f80803d0b5988c172753fee54029daf6a95",
+        "license": "GPL-3.0-only (includes the GPL JAWS trace fixture)"
+      },
+      "tests/score_core.c": {
+        "sha256": "0c95363f4b87040cfb722102ea72e543a02e4fb8c688a75dc582a2c2e6f76fcc",
+        "license": "MIT"
+      },
+      "docs/SFX-CLIPS.md": {
+        "sha256": "7d7d15a7ac352ed762de86e14ab9980bd087d33fabc688bc35436603e3a266c7",
+        "license": "MIT"
+      },
+      "docs/SCORE-PLAYER.md": {
+        "sha256": "b26af4306df0965fc8997ff7b0df566c14b3f5b0455ae68f552889f1da4884dd",
+        "license": "MIT"
+      },
+      "examples/dos_sfx_demo.c": {
+        "sha256": "75246b810b40354f5d099d5e558644eda40cd35fc2dc372a332d77022e27bcc3",
+        "license": "GPL-3.0-only (isolated JAWS-derived example)"
+      },
+      "examples/jaws/COPYING": {
+        "sha256": "230184f60bae2feaf244f10a8bac053c8ff33a183bcc365b4d8b876d2b7f4809",
+        "license": "GPL-3.0-only (isolated JAWS-derived example)"
+      },
+      "examples/jaws/README.md": {
+        "sha256": "15b170b126bdebd229dd22e6e89502585bfee93e49d870610475e42395b47e1f",
+        "license": "GPL-3.0-only (isolated JAWS-derived example)"
+      },
+      "examples/jaws/export_ltsfx.c": {
+        "sha256": "db86dbaca0487de3bfe0f3799767134c7dc8ec35d4d8a6a991710b8b1d768342",
+        "license": "GPL-3.0-only (isolated JAWS-derived example)"
+      },
+      "examples/jaws/jaws_clips.h": {
+        "sha256": "ffb8ab0a6e4ad1c6ad01dd928f2558cece10cbd3bf90ab044e93693aa44fb499",
+        "license": "GPL-3.0-only (isolated JAWS-derived example)"
+      },
+      "examples/jaws/harpoon.ltsfx": {
+        "sha256": "1c8b0abce3eaf6f19c78d9006027389bd9de9b6c89a894421f0a5cb5ce394a75",
+        "license": "GPL-3.0-only (isolated JAWS-derived example)"
+      },
+      "examples/jaws/conch.ltsfx": {
+        "sha256": "4872bd0c006ba39f1bf75a7a1453233b5dc54a35b1653aaa608259f41f583fe5",
+        "license": "GPL-3.0-only (isolated JAWS-derived example)"
+      }
     }
   }
 }

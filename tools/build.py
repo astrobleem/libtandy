@@ -4,11 +4,14 @@ import argparse
 import json
 import os
 import subprocess
+import sys
 
 ROOT = Path(__file__).resolve().parents[1]
 TESTS = {
     'chip': ('chip_core', ['lt_chip']),
     'audio': ('audio_core', ['lt_chip', 'lt_audio']),
+    'sfx': ('sfx_core', ['lt_chip', 'lt_audio', 'lt_sfx']),
+    'score': ('score_core', ['lt_chip', 'lt_audio', 'lt_sfx', 'lt_score']),
     'graphics': ('gfx_host', ['lt_gfx']),
     'surface': ('surface_core', ['lt_surface']),
     'time': ('time_core', ['lt_time']),
@@ -20,15 +23,26 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--target', choices=('host', 'dos'), required=True)
     parser.add_argument('--cc', default='cc')
+    parser.add_argument('--gcc-launcher', type=Path)
+    parser.add_argument('--runtime-bin', type=Path)
     parser.add_argument('--watcom', type=Path, default=Path('C:/WATCOM'))
     args = parser.parse_args()
+    if args.target == 'dos' and (args.gcc_launcher or args.runtime_bin):
+        parser.error('--gcc-launcher and --runtime-bin apply to host builds')
+    if args.runtime_bin and not args.gcc_launcher:
+        parser.error('--runtime-bin requires --gcc-launcher')
     out = ROOT / 'build' / args.target
     out.mkdir(parents=True, exist_ok=True)
     env = dict(os.environ)
     records = []
 
     def run(argv, label):
-        proc = subprocess.Popen(list(map(str, argv)), cwd=out, env=env,
+        run_env = env
+        if label.endswith(' run') and args.runtime_bin:
+            run_env = dict(env)
+            run_env['PATH'] = str(args.runtime_bin.resolve()) + os.pathsep + \
+                run_env.get('PATH', '')
+        proc = subprocess.Popen(list(map(str, argv)), cwd=out, env=run_env,
                                 stdout=subprocess.PIPE,
                                 stderr=subprocess.PIPE, text=True)
         try:
@@ -71,6 +85,11 @@ def main():
              ROOT / 'adapters/lt_time_dos.c',
              ROOT / 'adapters/lt_dos_app.c',
              ROOT / 'adapters/lt_dos_app_dos.c'], 'demo')
+        run([*flags, '-k4096', '-fe=SFXDEMO.EXE',
+             ROOT / 'examples/dos_sfx_demo.c', ROOT / 'src/lt_chip.c',
+             ROOT / 'src/lt_audio.c', ROOT / 'src/lt_sfx.c',
+             ROOT / 'src/lt_time.c', ROOT / 'adapters/lt_dos.c',
+             ROOT / 'adapters/lt_time_dos.c'], 'sfx demo')
     for name, (test, modules) in TESTS.items():
         sources = [ROOT / 'src' / (module + '.c') for module in modules]
         sources.append(ROOT / 'tests' / (test + '.c'))
@@ -78,7 +97,11 @@ def main():
             run([*flags, '-k4096', '-fe=' + name + '.EXE', *sources], name)
         else:
             program = out / (name + ('.exe' if os.name == 'nt' else ''))
-            run([args.cc, '-std=c89', '-pedantic-errors', '-Wall', '-Wextra',
+            compiler = [args.cc]
+            if args.gcc_launcher:
+                compiler = [sys.executable,
+                            str(args.gcc_launcher.resolve()), '--']
+            run([*compiler, '-std=c89', '-pedantic-errors', '-Wall', '-Wextra',
                  '-Werror', '-O2', '-I' + str(ROOT / 'include'), *sources,
                  '-o', program], name + ' compile')
             result = run([program], name + ' run')
@@ -96,7 +119,11 @@ def main():
                    ROOT / 'adapters/lt_dos_app.c',
                    ROOT / 'tests/dos_app_host.c',
                    ROOT / 'tests/dos_app_platform_fake.c']
-        run([args.cc, '-std=c89', '-pedantic-errors', '-Wall', '-Wextra',
+        compiler = [args.cc]
+        if args.gcc_launcher:
+            compiler = [sys.executable,
+                        str(args.gcc_launcher.resolve()), '--']
+        run([*compiler, '-std=c89', '-pedantic-errors', '-Wall', '-Wextra',
              '-Werror', '-O2', '-I' + str(ROOT / 'include'), *sources,
              '-o', program], 'dos_app compile')
         result = run([program], 'dos_app run')

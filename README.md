@@ -6,9 +6,11 @@ surfaces, bounded events, BIOS keyboard/mouse polling, cooperative coarse time
 and a caller-driven audio facade. This is the DOS library, separate from the
 Windows 3.0 USER/GDI project named libwintandy.
 
-This first public edition contains the original MIT modules selected from
-existing local libtandy revision `d633d25b6bfd9f56105acdd2e86f960c8db3efb5`.
-`SOURCE.json` records the source file hashes and the small chip-test extraction.
+This source tree starts with the first-party MIT modules selected from local
+libtandy revision `d633d25b6bfd9f56105acdd2e86f960c8db3efb5`. `SOURCE.json`
+records their hashes and the small chip-test extraction. The optional
+JAWS-derived sample cues are separately marked GPL-3.0-only under
+`examples/jaws/`; they do not change the license of the reusable MIT modules.
 The existing MIT copyright and permission notice are retained verbatim in
 `LICENSE`; no license is assigned to excluded third-party work.
 
@@ -23,13 +25,16 @@ The existing MIT copyright and permission notice are retained verbatim in
 | `lt_surface.h`, `lt_media.h` | Bounded caller-owned INDEX8 storage, clipping, blits and palettes. No SDL code or compatibility claim. |
 | `lt_event.h`, DOS input | Bounded foreground queue; BIOS press events and optional mouse snapshots. No key-up/held-state guarantee, installed ISR or mouse callback. |
 | `lt_time.h`, DOS time | Cooperative caller-driven coarse time. No fine-frame-clock guarantee, callback thread or timer reprogramming. |
-| `lt_audio.h` | Caller-driven channel/event ownership and explicit service/stop. No song decoder or replacement scheduler. |
+| `lt_audio.h` | Caller-driven channel ownership, explicit service/stop, and the shared PSG voice path used by native effects and static scores. No timer or IRQ takeover. |
+| `lt_sfx.h`, `lt_score.h` | Bounded caller-ticked PSG clips and static Tandy scores, layered over `lt_audio.h`; no PCM, heap, or timer ownership. |
 | [`sound/`](sound/README.md) | Standalone MIT C89 Standard MIDI File parser and PSG/PIT renderer. The caller supplies timing and hardware transport; see the module's capability revision and range limits. |
 
 Include matching headers and compile the needed `.c` modules directly into
 your application with matching calling convention, memory model and near/far
 pointer contracts. There is no mandatory prebuilt library or runtime binary.
-The hardware sink is optional. Pure tests capture writes in memory.
+The hardware sink is optional. Pure tests capture writes in memory. The
+standalone MIDI parser/renderer in `sound/` remains a separate optional module;
+native clips and static score tables do not duplicate MIDI parsing/rendering.
 
 ## Build
 
@@ -41,8 +46,9 @@ python tools/build.py --target dos --watcom C:/WATCOM
 ```
 
 This compiles the modules for real-mode DOS with Open Watcom `-0 -ms -ecc`,
-builds `build/dos/DEMO.EXE` and the DOS unit-test executables, and does not run
-them or start an emulator. The code targets 8086/8088, not 186/286 instructions.
+builds `build/dos/DEMO.EXE`, `build/dos/SFXDEMO.EXE` and the DOS unit-test
+executables, and does not run them or start an emulator. The code targets
+8086/8088, not 186/286 instructions.
 In DOS on a compatible Tandy, `DEMO` enters mode 9, polls BIOS key presses,
 moves an original square, plays a tone and restores the prior video mode, page
 and cursor while muting/releasing its sound channels when Escape is pressed.
@@ -84,11 +90,51 @@ python tools/build.py --target host --cc gcc
 python sound/tests/run.py --cc gcc
 ```
 
-On Windows pass the full path of an installed GCC if it is not on PATH.
+The host build uses `cc` from `PATH` by default. Pass `--cc <compiler>` to
+select another compiler, or use `--gcc-launcher <launcher.py>` and
+`--runtime-bin <runtime-directory>` when a Python-based compiler launcher is
+needed. The launcher runs its DLL preflight before compiler startup. These
+options do not change the DOS build.
+
+```powershell
+python tools/build.py --target host
+```
+
 Build logs and a result manifest are local under `build/`. Host tests exercise
 synthetic pixels/state and do not qualify DOS ABI, IRQ timing or hardware.
-The public initial build status and recorded warnings are documented in
-`VALIDATION.md`; no fresh DOS execution or host test pass is claimed there.
+The original public-edition build record is historical. `VALIDATION.md` also
+records the results for this local native-audio integration candidate.
+
+## Native PSG effects and scores
+
+Short effects are versioned `lt_sfx_clip` command sequences. A game initializes
+one `lt_sfx_player` over its existing `lta_handle`, triggers a clip on a game
+event, and calls `lt_sfx_tick()` from its existing update cadence:
+
+```c
+lt_sfx_init(&effects, &audio);
+if (picked_up_coin)
+    lt_sfx_trigger(&effects, &coin_clip);
+/* Once per existing game update. */
+lt_sfx_tick(&effects);
+```
+
+Effects borrow the declared PSG channels and expand the reservation to the
+tone-2/noise pair when required by the hardware, respect clip priority, and
+restore the latest music state when they end. The binary `.ltsfx` format is
+canonical little-endian `LTSF/1`; the C descriptor is `LTSFX_CLIP/2` and
+records a reduced rational source tick rate without owning a clock. See
+[`docs/SFX-CLIPS.md`](docs/SFX-CLIPS.md) for the fields, editor import/export
+contract, and validation limits.
+
+Longer fixed arrangements use `lt_score` with static note/percussion tables and
+the caller's existing timer cadence. It does not parse MIDI files. The
+optional MIDI parser and renderer remain under [`sound/`](sound/README.md).
+See [`docs/SCORE-PLAYER.md`](docs/SCORE-PLAYER.md) for timing and the safe
+non-owning speaker callback contract. `examples/dos_sfx_demo.c` builds as
+`SFXDEMO.EXE`: H/C/Q plays the JAWS cues interactively, and `/demo` runs a
+finite harpoon, silent gap, conch and all-channel stop sequence from
+foreground retrace polling only.
 
 ## Deliberate release boundaries
 
@@ -104,3 +150,8 @@ Keep game-specific fine timing and held-input adapters when these library
 contracts do not provide an equivalent. Measure actual 8088 rendering costs
 before replacing optimized code. This repository does not claim a complete
 game engine, NES emulation, 60 FPS rendering or physical EX qualification.
+
+The JAWS-derived examples under `examples/jaws/` and the sample-only DOS demo
+carry their separate GPL-3.0-only notices. They do not change the MIT license
+of the reusable library modules; see `examples/jaws/COPYING` and its
+provenance notes before reusing those example assets.
