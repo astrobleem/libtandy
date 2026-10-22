@@ -7,7 +7,7 @@
 #include <limits.h>
 #include "lt_sound.h"
 
-#define LTA_API_VERSION 0x0100U
+#define LTA_API_VERSION 0x0201U
 
 #if ULONG_MAX == 0xFFFFFFFFUL
 typedef unsigned long lta_u32;
@@ -37,6 +37,8 @@ typedef enum {
 #define LTA_OP_MUTE 8U
 #define LTA_OP_ARM_STOP 9U
 #define LTA_OP_SERVICE 10U
+#define LTA_OP_LEVEL 11U
+#define LTA_OP_NOISE_MODE 12U
 #define LTA_OP_PCM 128U
 
 #define LTA_CAP_TONE 0x0001U
@@ -54,7 +56,9 @@ typedef enum {
  * noise operations use mode (0..7) and level; MUTE uses enabled (0/1).
  * ARM_STOP uses value as a nonzero duration or immediate-stop zero;
  * SERVICE uses value as a modulo-32-bit sample in caller-defined clock units.
- * The first SERVICE establishes time; later gaps must be below 2^31 ticks. */
+ * LEVEL writes only volume for acquired channel 0..3; NOISE_MODE writes only
+ * the noise-control latch and updates the saved mode. The first SERVICE
+ * establishes time; later gaps must be below 2^31 ticks. */
 typedef struct {
     lt_u8 op, mask, channel, level, mode, enabled;
     lt_u16 period;
@@ -67,6 +71,9 @@ typedef struct {
     lt_u16 period[3];
     lt_u8 noise_mode, clock_valid, deadline_mask;
     lta_u32 last_now, deadline[4];
+    /* Private overlay state used by the caller-driven clip player. */
+    lt_u8 effect_mask, effect_active, effect_playing, effect_kind[4];
+    lt_u8 effect_level[4], effect_noise_mode;
 } lta_handle;
 
 #define LTA_KIND_NONE 0U
@@ -79,13 +86,23 @@ typedef struct {
 lta_status lta_init(lta_handle *handle, lt_chip *chip, lt_u8 token);
 void lta_request_init(lta_request *request);
 lt_u16 lta_capabilities(void);
-/* Foreground serialized access only: commands sharing a chip must not run
- * concurrently or reentrantly. A handle exclusively manages its claimed
+/* Serialized access only: commands sharing a chip must not run concurrently
+ * or reentrantly. A handle exclusively manages its claimed
  * channels; disjoint handles may share the chip with unique tokens. Callers
  * must honor tone2/coupled-noise semantics and exclude all external writers.
  * TONE/NOISE_UPDATE require a playing voice; START restarts it and cancels its
  * deadline. STOP mutes/cancels deadlines but keeps claims. Request and handle
  * must not overlap. Capabilities are static; no hardware/frequency detection. */
 lta_status lta_command(lta_handle *handle, const lta_request *request);
+
+/* Internal interface for the reusable clip player in lt_sfx.h. Applications
+ * should use lt_sfx_* instead of calling these overlay helpers directly. */
+lta_status lta_overlay_begin(lta_handle *handle, lt_u8 mask,
+                             lt_u8 *borrowed_mask);
+lta_status lta_overlay_tone(lta_handle *handle, lt_u8 channel,
+                            lt_u16 period, lt_u8 level);
+lta_status lta_overlay_noise(lta_handle *handle, lt_u8 mode, lt_u8 level);
+lta_status lta_overlay_stop(lta_handle *handle, lt_u8 mask);
+lta_status lta_overlay_end(lta_handle *handle);
 
 #endif
