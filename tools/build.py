@@ -17,6 +17,7 @@ TESTS = {
     'time': ('time_core', ['lt_time']),
     'event': ('event_core', ['lt_event']),
     'keys': ('keys_core', ['lt_keys']),
+    'blit16': ('gfx_blit16', ['lt_gfx', 'lt_gfx_rows']),
 }
 # DOS-only demos of the platform services: name -> sources.
 DOS_DEMOS = {

@@ -81,3 +81,18 @@ Branch `claude/dos-platform-services`, based on main `94cf89f`.
 - Not checked: audibility of TICKDEMO's beeps (86Box audio not captured),
   a real Tandy 1000 EX or HX, other Tandy models, chain mode of the keyboard
   service.
+- `lt_gfx_blit_packed` 16-bit clipping (fixed 2026-10-24): `bx + width`
+  overflowed a 16-bit `int` (bx=32760, width=20: the sum wraps negative, the
+  clip was skipped and 12 bytes were written past the 32 KiB frame).
+  Clipping now uses `long` and rejects off-screen starts before adding.
+  `tests/gfx_blit16.c` (`blit16`) blits into a far buffer with 64-byte guards
+  on both sides: the reported case, then x in {32760, 32767, 160, -32768,
+  -32760, -20, 159} by y in {0, 199, 200, 32767, -32768, -1} with
+  width/rows 20/1, 32767/4 and 20/32767. Open Watcom 16-bit build on 86Box
+  Tandy 1000 HX:
+  - old `lt_gfx_rows.c` (SHA-256 `076714cc...`):
+    `FAIL bx=32760 y=0 width=20 rows=1 guard bytes changed=12`;
+  - fixed (SHA-256 `430e76f4...`): 127 cases `ok`, "all guards intact".
+  The full `gfx_host` test built for DOS hangs with the old code (its sweep
+  corrupts memory) and prints "graphics host tests passed" with the fix.
+  Host GCC passes both (32-bit `int`), so only the 16-bit run shows the bug.

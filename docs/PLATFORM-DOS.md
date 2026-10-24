@@ -1,9 +1,11 @@
 # DOS platform services: pages, held keys, update clock, memory
 
+Provenance and licensing: [`PROVENANCE-DOS-PLATFORM.md`](PROVENANCE-DOS-PLATFORM.md).
+
 Four small Open Watcom 16-bit DOS modules for a foreground Tandy 1000 game,
 plus portable pieces with host tests. They came out of the native JAWS port
-(first-party code, relicensed MIT for this library); no game data or logic
-is included. Each module owns one resource, opens it explicitly, and gives it
+(first-party page and clock code, relicensed MIT by its owner); no game data
+or logic is included. Each module owns one resource, opens it explicitly, and gives it
 back on close, also after a failed open.
 
 | Header | Resource | Code (8088, `-os`) | Data |

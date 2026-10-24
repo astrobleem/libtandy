@@ -256,5 +256,44 @@
         "license": "GPL-3.0-only (isolated JAWS-derived example)"
       }
     }
+  },
+  "dos_platform_services": {
+    "provenance": "docs/PROVENANCE-DOS-PLATFORM.md",
+    "license": "MIT (owner-approved relicensing of first-party JAWS page/clock code, 2026-10-24)",
+    "sources": {
+      "adapters/lt_page_dos.c": {
+        "from": "jaws sol src/jaws_page.c",
+        "commit": "6bb5f04c3692526cf397e346d167c27912dcd3db",
+        "kind": "rewritten"
+      },
+      "adapters/lt_tick_dos.c": {
+        "from": "jaws sol src/jaws_tick.c",
+        "commit": "db54ec071c18eb4d393a0c2bbb22ea77bdacd98d",
+        "kind": "rewritten"
+      },
+      "adapters/lt_keys_dos.c": {
+        "from": null,
+        "kind": "new; not derived from GPL RAVE-derived jaws_dos.c"
+      },
+      "src/lt_keys.c": {
+        "from": null,
+        "kind": "new"
+      },
+      "adapters/lt_mem_dos.c": {
+        "from": "jaws sol src/jaws_game_dos.c launch formula",
+        "commit": "1b191f8",
+        "kind": "new"
+      },
+      "src/lt_gfx_rows.c": {
+        "from": null,
+        "kind": "new"
+      },
+      "tools/eatlow.asm": {
+        "from": "jaws sol tools/eatlow.asm",
+        "commit": "1b191f8",
+        "kind": "copied, relicensed"
+      }
+    },
+    "third_party_code": "none; jaws_dos.c (GPL RAVE-derived clock and keyboard) excluded; shared hardware technique flagged in the provenance file"
   }
 }

@@ -55,21 +55,24 @@ void lt_gfx_blit_packed(lt_gfx_surface *s, lt_gfx_i16 bx, lt_gfx_i16 y,
                         unsigned src_stride, lt_gfx_i16 width,
                         lt_gfx_i16 rows)
 {
-    lt_gfx_i16 skip = 0, r;
+    /* Clip in long: bx + width and y + rows can exceed 16 bits. */
+    long x0 = bx, x1, y0 = y, y1, skip, r;
     if (!lt_gfx_valid(s) || src == 0 || width <= 0 || rows <= 0) return;
-    if (bx < 0) { skip = (lt_gfx_i16)-bx; width -= skip; bx = 0; }
-    if (bx + width > (lt_gfx_i16)LT_GFX_ROW_BYTES)
-        width = (lt_gfx_i16)((lt_gfx_i16)LT_GFX_ROW_BYTES - bx);
-    if (width <= 0) return;
-    for (r = 0; r < rows; ++r) {
-        lt_gfx_i16 ty = (lt_gfx_i16)(y + r);
-        if (ty < 0) continue;
-        if (ty >= LT_GFX_HEIGHT) break;
-        LT_GFX_COPY(s->pixels + lt_gfx_offset((unsigned int)ty) +
-                    (unsigned int)bx,
-                    src + (unsigned long)r * src_stride + (unsigned int)skip,
-                    (unsigned int)width);
-    }
+    if (x0 >= (long)LT_GFX_ROW_BYTES || y0 >= (long)LT_GFX_HEIGHT) return;
+    x1 = x0 + (long)width;
+    y1 = y0 + (long)rows;
+    if (x1 <= 0L || y1 <= 0L) return;
+    skip = x0 < 0L ? -x0 : 0L;
+    if (x0 < 0L) x0 = 0L;
+    if (x1 > (long)LT_GFX_ROW_BYTES) x1 = (long)LT_GFX_ROW_BYTES;
+    r = y0 < 0L ? -y0 : 0L;
+    if (y1 > (long)LT_GFX_HEIGHT) y1 = (long)LT_GFX_HEIGHT;
+    for (; y0 + r < y1; ++r)
+        LT_GFX_COPY(s->pixels + lt_gfx_offset((unsigned int)(y0 + r)) +
+                    (unsigned int)x0,
+                    src + (unsigned long)r * src_stride +
+                    (unsigned int)skip,
+                    (unsigned int)(x1 - x0));
 }
 
 void lt_gfx_copy_wrapped(lt_gfx_u8 LT_GFX_FAR *dst,
