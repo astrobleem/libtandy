@@ -5,6 +5,10 @@
 
 static lt_gfx_u8 guarded[LT_GFX_BYTES + 2U];
 static lt_gfx_surface surface;
+static lt_gfx_u8 LT_GFX_FAR second[LT_GFX_BYTES];
+static lt_gfx_u8 packed[4 * 20];
+#define BLIT_GUARD 64U
+static lt_gfx_u8 LT_GFX_FAR blitbuf[LT_GFX_BYTES + 2U * BLIT_GUARD];
 static int failures;
 
 #define CHECK(expr) do { if (!(expr)) { \
@@ -116,7 +120,74 @@ int main(void)
     lt_gfx_circle(&surface, 50, 50, 1, 7U, 0);
     CHECK(lt_gfx_get(&surface, 51, 50) == 7);
     CHECK(lt_gfx_get(&surface, 51, 51) == 2);
+    /* Row addresses follow the four-bank layout. */
+    CHECK(lt_gfx_row(&surface, 0) == fb);
+    CHECK(lt_gfx_row(&surface, 5) == fb + ref_offset(0U, 5U));
+    CHECK(lt_gfx_row(&surface, 199) == fb + ref_offset(0U, 199U));
+    CHECK(lt_gfx_row(&surface, 200) == 0 && lt_gfx_row(&surface, -1) == 0);
+    /* Box copy between pages touches only the box. */
+    {
+        lt_gfx_surface other;
+        lt_gfx_init(&other, second);
+        lt_gfx_clear(&surface, 1U);
+        lt_gfx_clear(&other, 9U);
+        lt_gfx_copy_rows(&surface, &other, 3, 7, 10, 12);
+        for (y = 0; y < 200U; ++y)
+            for (x = 0; x < 160U; ++x)
+                CHECK(fb[ref_offset(x * 2U, y)] ==
+                      ((y >= 3U && y < 7U && x >= 10U && x < 12U)
+                       ? 0x99U : 0x11U));
+        lt_gfx_copy_rows(&surface, &other, -5, 300, -5, 400);
+        for (i = 0; i < LT_GFX_BYTES; ++i)
+            if (i % 8192U < 8000U) CHECK(fb[i] == 0x99U);
+    }
+    /* Packed blit with clipping on every edge. */
+    for (i = 0; i < sizeof(packed); ++i) packed[i] = (lt_gfx_u8)i;
+    lt_gfx_clear(&surface, 0U);
+    lt_gfx_blit_packed(&surface, 150, 197, packed, 20U, 20, 4);
+    CHECK(fb[ref_offset(300U, 197U)] == 0U && fb[ref_offset(318U, 197U)] == 9U);
+    CHECK(fb[ref_offset(300U, 199U)] == 40U);
+    lt_gfx_blit_packed(&surface, -2, -1, packed, 20U, 4, 2);
+    CHECK(fb[ref_offset(0U, 0U)] == 22U && fb[ref_offset(2U, 0U)] == 23U);
+    check_guards();
+    /* Wrapped row scroll. */
+    {
+        lt_gfx_u8 row[8], out[8];
+        for (i = 0; i < 8U; ++i) row[i] = (lt_gfx_u8)(i + 1U);
+        lt_gfx_copy_wrapped(out, row, 8U, 3U);
+        CHECK(out[0] == 4U && out[4] == 8U && out[5] == 1U && out[7] == 3U);
+        lt_gfx_copy_wrapped(out, row, 8U, 8U);
+        CHECK(out[0] == 1U && out[7] == 8U);
+    }
+    /* 16-bit extremes in the packed blit must clip, never wrap: write into
+     * a guarded copy of the frame and check the guards on both sides. */
+    {
+        static const lt_gfx_i16 xs[] = { 32760, 32767, 159, 160, -32768,
+                                         -32760, -21, -20 };
+        static const lt_gfx_i16 ys[] = { 0, 199, 200, 32767, -32768, -1 };
+        unsigned a, b;
+        lt_gfx_surface g;
+        for (i = 0; i < sizeof(blitbuf); ++i) blitbuf[i] = 0xC3U;
+        lt_gfx_init(&g, blitbuf + BLIT_GUARD);
+        for (a = 0; a < sizeof(xs) / sizeof(xs[0]); ++a)
+            for (b = 0; b < sizeof(ys) / sizeof(ys[0]); ++b) {
+                lt_gfx_blit_packed(&g, xs[a], ys[b], packed, 20U, 20, 1);
+                lt_gfx_blit_packed(&g, xs[a], ys[b], packed, 20U, 32767, 4);
+                lt_gfx_blit_packed(&g, xs[a], ys[b], packed, 20U, 20, 32767);
+            }
+        for (i = 0; i < BLIT_GUARD; ++i) {
+            CHECK(blitbuf[i] == 0xC3U);
+            CHECK(blitbuf[BLIT_GUARD + LT_GFX_BYTES + i] == 0xC3U);
+        }
+        /* edges: bx 159 width 20 writes exactly one byte; bx -20 none */
+        for (i = 0; i < sizeof(blitbuf); ++i) blitbuf[i] = 0xC3U;
+        lt_gfx_blit_packed(&g, 159, 0, packed, 20U, 20, 1);
+        lt_gfx_blit_packed(&g, -20, 1, packed, 20U, 20, 1);
+        for (i = 0; i < sizeof(blitbuf); ++i)
+            CHECK(blitbuf[i] == (i == BLIT_GUARD + 159U ? 0U : 0xC3U));
+    }
     lt_gfx_init(&surface, 0);
+    CHECK(lt_gfx_row(&surface, 0) == 0);
     lt_gfx_line(&surface, -32768, 32767, 32767, -32768, 1U);
     check_guards();
     if (failures != 0) return 1;

@@ -292,3 +292,4 @@ void lt_gfx_glyph8(lt_gfx_surface *s, lt_gfx_i16 x, lt_gfx_i16 y,
         }
     }
 }
+

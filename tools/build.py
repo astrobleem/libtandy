@@ -12,10 +12,27 @@ TESTS = {
     'audio': ('audio_core', ['lt_chip', 'lt_audio']),
     'sfx': ('sfx_core', ['lt_chip', 'lt_audio', 'lt_sfx']),
     'score': ('score_core', ['lt_chip', 'lt_audio', 'lt_sfx', 'lt_score']),
-    'graphics': ('gfx_host', ['lt_gfx']),
+    'graphics': ('gfx_host', ['lt_gfx', 'lt_gfx_rows']),
     'surface': ('surface_core', ['lt_surface']),
     'time': ('time_core', ['lt_time']),
     'event': ('event_core', ['lt_event']),
+    'keys': ('keys_core', ['lt_keys']),
+    'blit16': ('gfx_blit16', ['lt_gfx', 'lt_gfx_rows']),
+}
+# DOS-only demos of the platform services: name -> sources.
+DOS_DEMOS = {
+    'PAGEDEMO': ['examples/page_demo.c', 'src/lt_chip.c', 'src/lt_gfx.c',
+                 'src/lt_event.c', 'adapters/lt_dos.c',
+                 'adapters/lt_input_dos.c', 'adapters/lt_dos_app.c',
+                 'adapters/lt_dos_app_dos.c', 'adapters/lt_page_dos.c'],
+    'KEYDEMO': ['examples/keys_demo.c', 'src/lt_chip.c', 'src/lt_gfx.c',
+                'src/lt_keys.c', 'adapters/lt_dos.c',
+                'adapters/lt_dos_app.c', 'adapters/lt_dos_app_dos.c',
+                'adapters/lt_keys_dos.c'],
+    'TICKDEMO': ['examples/tick_demo.c', 'src/lt_chip.c', 'src/lt_gfx.c',
+                 'src/lt_audio.c', 'src/lt_keys.c', 'adapters/lt_dos.c',
+                 'adapters/lt_dos_app.c', 'adapters/lt_dos_app_dos.c',
+                 'adapters/lt_keys_dos.c', 'adapters/lt_tick_dos.c'],
 }
 
 
@@ -68,10 +85,19 @@ def main():
 
     if args.target == 'dos':
         watcom = args.watcom.resolve()
-        env.update(WATCOM=str(watcom), INCLUDE=str(watcom / 'H'),
-                   LIB=str(watcom / 'LIB286') + ';' +
-                       str(watcom / 'LIB286/DOS'))
-        cc = watcom / 'BINNT/wcl.exe'
+        if os.name == 'nt':
+            env.update(WATCOM=str(watcom), INCLUDE=str(watcom / 'H'),
+                       LIB=str(watcom / 'LIB286') + ';' +
+                           str(watcom / 'LIB286/DOS'))
+            cc = watcom / 'BINNT/wcl.exe'
+        else:
+            # Open Watcom's Linux host layout (lower-case directories)
+            env.update(WATCOM=str(watcom), INCLUDE=str(watcom / 'h'),
+                       LIB=str(watcom / 'lib286') + os.pathsep +
+                           str(watcom / 'lib286/dos'),
+                       PATH=str(watcom / 'binl') + os.pathsep +
+                           env.get('PATH', ''))
+            cc = watcom / 'binl/wcl'
         flags = [cc, '-q', '-bt=dos', '-0', '-ms', '-ecc', '-os', '-s',
                  '-w4', '-wx', '-i=' + str(ROOT / 'include')]
         for source in sorted((ROOT / 'src').glob('*.c')) + sorted(
@@ -90,6 +116,9 @@ def main():
              ROOT / 'src/lt_audio.c', ROOT / 'src/lt_sfx.c',
              ROOT / 'src/lt_time.c', ROOT / 'adapters/lt_dos.c',
              ROOT / 'adapters/lt_time_dos.c'], 'sfx demo')
+        for exe, sources in DOS_DEMOS.items():
+            run([*flags, '-k4096', '-fe=' + exe + '.EXE',
+                 *[ROOT / src for src in sources]], exe.lower())
     for name, (test, modules) in TESTS.items():
         sources = [ROOT / 'src' / (module + '.c') for module in modules]
         sources.append(ROOT / 'tests' / (test + '.c'))
