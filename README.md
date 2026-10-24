@@ -134,23 +134,3 @@ non-owning speaker callback contract. `examples/dos_sfx_demo.c` builds as
 finite harpoon, silent gap, conch and all-channel stop sequence from
 foreground retrace polling only.
 
-## Deliberate release boundaries
-
-This edition excludes the separate GPL RAVE RPI1 evaluator/reference data,
-Win16 adapter, process-scoped overlay loader, resident graphics extension,
-private qualification traces and prebuilt runtime binaries. Those components
-are not relicensed by this repository's MIT license. No game ROMs, extracted
-commercial graphics, songs, proprietary toolchains, private workspace paths
-or credentials are included. Public source availability does not authorize
-publication of an application's copyrighted assets.
-
-The optional platform services (`lt_page_dos`, `lt_keys_dos`, `lt_tick_dos`,
-`lt_mem_dos`) provide two-page presentation, held keys and a fixed-rate
-update clock; keep game-specific adapters only where they do not fit. Measure actual 8088 rendering costs
-before replacing optimized code. This repository does not claim a complete
-game engine, NES emulation, 60 FPS rendering or physical EX qualification.
-
-The JAWS-derived examples under `examples/jaws/` and the sample-only DOS demo
-carry their separate GPL-3.0-only notices. They do not change the MIT license
-of the reusable library modules; see `examples/jaws/COPYING` and its
-provenance notes before reusing those example assets.
