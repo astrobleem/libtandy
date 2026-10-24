@@ -48,7 +48,7 @@ int main(void)
     /* A real left shift is a key. */
     ltkb_feed(&d, 0x2A);
     ltkb_take(&d, &s);
-    CHECK(ltkb_held(&s, 0x2A));
+    CHECK(ltkb_held(&s, 0x2A) && LTKB_BIT(s.held, 0x2A) && !LTKB_BIT(s.held, 0x2B));
     /* Pause is skipped entirely. */
     ltkb_decoder_init(&d);
     feed(&d, pause, 6U);

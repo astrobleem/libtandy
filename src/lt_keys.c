@@ -1,4 +1,5 @@
 /* SPDX-License-Identifier: MIT */
+#include <string.h>
 #include "lt_keys.h"
 
 static void ltkb_clear(unsigned char *bits)
@@ -55,15 +56,10 @@ void ltkb_feed(ltkb_decoder *d, unsigned char scan)
 
 void ltkb_take(ltkb_decoder *d, ltkb_state *out)
 {
-    unsigned i;
     if (d == 0 || out == 0) return;
-    for (i = 0; i < LTKB_BYTES; ++i) {
-        out->held[i] = d->live.held[i];
-        out->pressed[i] = d->live.pressed[i];
-        out->released[i] = d->live.released[i];
-        d->live.pressed[i] = 0;
-        d->live.released[i] = 0;
-    }
+    memcpy(out, &d->live, sizeof(*out));
+    memset(d->live.pressed, 0, LTKB_BYTES);
+    memset(d->live.released, 0, LTKB_BYTES);
 }
 
 static int ltkb_bit(const unsigned char *bits, unsigned scan)

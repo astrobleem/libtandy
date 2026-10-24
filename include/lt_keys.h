@@ -40,7 +40,11 @@ void ltkb_feed(ltkb_decoder *d, unsigned char scan);
  * provides any needed exclusion (the DOS adapter disables IRQs). */
 void ltkb_take(ltkb_decoder *d, ltkb_state *out);
 
-/* Queries on a snapshot; scan 0..127. */
+/* Bit test on one of a snapshot's bitmaps without a call, for hot paths
+ * (scan must be 0..127): LTKB_BIT(state.held, 0x48). */
+#define LTKB_BIT(bits, scan) (((bits)[(scan) >> 3] >> ((scan) & 7U)) & 1U)
+
+/* Queries on a snapshot; scan 0..127 (others read as 0). */
 int ltkb_held(const ltkb_state *s, unsigned scan);
 int ltkb_pressed(const ltkb_state *s, unsigned scan);
 int ltkb_released(const ltkb_state *s, unsigned scan);
