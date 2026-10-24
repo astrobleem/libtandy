@@ -78,7 +78,7 @@ void lt_gfx_copy_wrapped(lt_gfx_u8 LT_GFX_FAR *dst,
 {
     if (dst == 0 || src == 0 || width == 0U || width > LT_GFX_ROW_BYTES)
         return;
-    rotate %= width;
+    if (rotate >= width) rotate %= width;
     LT_GFX_COPY(dst, src + rotate, width - rotate);
     if (rotate) LT_GFX_COPY(dst + (width - rotate), src, rotate);
 }

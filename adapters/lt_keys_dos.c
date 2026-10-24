@@ -94,6 +94,12 @@ void ltkb_poll(ltkb_state *out)
     ltkb_sti(f);
 }
 
+int ltkb_down_now(unsigned scan)
+{
+    if (scan >= LTKB_KEYS) return 0;
+    return LTKB_BIT(keys.live.held, scan);
+}
+
 unsigned ltkb_bytes(void)
 {
     unsigned f = ltkb_cli(), n = keys.bytes;

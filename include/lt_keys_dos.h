@@ -38,6 +38,10 @@ int ltkb_is_open(void);
 /* Snapshot of the keys since the previous poll (see lt_keys.h). Valid also
  * when closed (all clear after close). */
 void ltkb_poll(ltkb_state *out);
+/* Is the key down right now? A single-byte read of the live state, no
+ * snapshot: cheap enough for a per-frame check such as a quit key. Does
+ * not consume presses/releases. */
+int ltkb_down_now(unsigned scan);
 /* Scan bytes received since open (diagnostics). */
 unsigned ltkb_bytes(void);
 
