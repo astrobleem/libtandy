@@ -12,7 +12,7 @@ back on close, also after a failed open.
 | `lt_keys_dos.h` + `lt_keys.h` | IRQ1 | 406 + 464 bytes | 58 bytes |
 | `lt_tick_dos.h` | IRQ0 / PIT channel 0 | 839 bytes | 3,112 bytes (3 KiB private stack) |
 | `lt_mem_dos.h` | DOS memory blocks | 413 bytes | the `ltmem_pool` object (108 bytes) |
-| `lt_gfx.h` additions | (none) | part of `lt_gfx.c` | none |
+| `lt_gfx.h` additions (`lt_gfx_rows.c`) | (none) | 551 bytes | none |
 
 ## Two pages (`lt_page_dos.h`)
 
@@ -101,7 +101,8 @@ launch figure, not N.
 (restore a dirty box from another page or a background frame),
 `lt_gfx_blit_packed` (linear packed image into the frame) and
 `lt_gfx_copy_wrapped` (wrapped horizontal scroll of a row, 2-pixel steps).
-Portable C89, host tested; `_fmemcpy` on 16-bit Watcom.
+Portable C89 in `src/lt_gfx_rows.c`, host tested; `_fmemcpy` on 16-bit
+Watcom.
 
 ## Startup and shutdown order
 

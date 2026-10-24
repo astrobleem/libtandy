@@ -12,7 +12,7 @@ TESTS = {
     'audio': ('audio_core', ['lt_chip', 'lt_audio']),
     'sfx': ('sfx_core', ['lt_chip', 'lt_audio', 'lt_sfx']),
     'score': ('score_core', ['lt_chip', 'lt_audio', 'lt_sfx', 'lt_score']),
-    'graphics': ('gfx_host', ['lt_gfx']),
+    'graphics': ('gfx_host', ['lt_gfx', 'lt_gfx_rows']),
     'surface': ('surface_core', ['lt_surface']),
     'time': ('time_core', ['lt_time']),
     'event': ('event_core', ['lt_event']),

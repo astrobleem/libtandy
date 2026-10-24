@@ -52,7 +52,8 @@ void lt_gfx_glyph8(lt_gfx_surface *surface, lt_gfx_i16 x, lt_gfx_i16 y,
                    const lt_gfx_u8 rows[8], lt_gfx_u8 foreground,
                    lt_gfx_u8 background, int transparent);
 
-/* Row access and block moves for frame composition (C89, no BIOS). Rows
+/* Row access and block moves for frame composition (src/lt_gfx_rows.c;
+ * C89, no BIOS). Rows
  * are 160 bytes, two pixels per byte (left pixel in the high nibble), in
  * the mode-9 layout of four 8 KiB banks: row y starts at
  * (y & 3) * 8192 + (y >> 2) * 160. All byte columns are 0..159. */
