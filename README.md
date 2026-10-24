@@ -6,13 +6,7 @@ surfaces, bounded events, BIOS keyboard/mouse polling, cooperative coarse time
 and a caller-driven audio facade. This is the DOS library, separate from the
 Windows 3.0 USER/GDI project named libwintandy.
 
-This source tree starts with the first-party MIT modules selected from local
-libtandy revision `d633d25b6bfd9f56105acdd2e86f960c8db3efb5`. `SOURCE.json`
-records their hashes and the small chip-test extraction. The optional
-JAWS-derived sample cues are separately marked GPL-3.0-only under
-`examples/jaws/`; they do not change the license of the reusable MIT modules.
-The existing MIT copyright and permission notice are retained verbatim in
-`LICENSE`; no license is assigned to excluded third-party work.
+
 
 ## Scope and contracts
 
