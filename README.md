@@ -23,8 +23,12 @@ The existing MIT copyright and permission notice are retained verbatim in
 | `lt_dos_app.h` (optional) | Foreground convenience setup for mode 9, the direct video aperture, BIOS input state and the default Tandy sound port. Saves/restores video page and cursor; no allocation or resident service. |
 | `lt_gfx_sprite8.h` | Index 0 is transparent; nonzero indices mapped to black remain opaque. Ordered destination overlap is allowed; source/framebuffer aliasing is excluded. |
 | `lt_surface.h`, `lt_media.h` | Bounded caller-owned INDEX8 storage, clipping, blits and palettes. No SDL code or compatibility claim. |
-| `lt_event.h`, DOS input | Bounded foreground queue; BIOS press events and optional mouse snapshots. No key-up/held-state guarantee, installed ISR or mouse callback. |
+| `lt_event.h`, DOS input | Bounded foreground queue; BIOS press events and optional mouse snapshots. No key-up/held-state guarantee, installed ISR or mouse callback (see `lt_keys_dos.h` for held keys). |
 | `lt_time.h`, DOS time | Cooperative caller-driven coarse time. No fine-frame-clock guarantee, callback thread or timer reprogramming. |
+| `lt_page_dos.h` | Two-page mode-9 presentation by hardware page flip on Tandy 1000 EX/HX-class video. Reserves the top of the DOS arena (48 KiB on 640 KiB) while open; single-page fallback. See [`docs/PLATFORM-DOS.md`](docs/PLATFORM-DOS.md). |
+| `lt_keys.h`, `lt_keys_dos.h` | Optional IRQ1 service: simultaneous held keys with press/release since the last poll. Restores the vector and BIOS keyboard state on close. |
+| `lt_tick_dos.h` | Optional fixed-rate IRQ0 update clock (1,193,182/divisor Hz) that keeps the BIOS 18.2 Hz tick; the single timer owner, audio serviced from its callback. |
+| `lt_mem_dos.h` | Launch memory figure and a DOS block pool released on every exit path. No built-in requirement. |
 | `lt_audio.h` | Caller-driven channel ownership, explicit service/stop, and the shared PSG voice path used by native effects and static scores. No timer or IRQ takeover. |
 | `lt_sfx.h`, `lt_score.h` | Bounded caller-ticked PSG clips and static Tandy scores, layered over `lt_audio.h`; no PCM, heap, or timer ownership. |
 | [`sound/`](sound/README.md) | Standalone MIT C89 Standard MIDI File parser and PSG/PIT renderer. The caller supplies timing and hardware transport; see the module's capability revision and range limits. |
@@ -146,8 +150,9 @@ commercial graphics, songs, proprietary toolchains, private workspace paths
 or credentials are included. Public source availability does not authorize
 publication of an application's copyrighted assets.
 
-Keep game-specific fine timing and held-input adapters when these library
-contracts do not provide an equivalent. Measure actual 8088 rendering costs
+The optional platform services (`lt_page_dos`, `lt_keys_dos`, `lt_tick_dos`,
+`lt_mem_dos`) provide two-page presentation, held keys and a fixed-rate
+update clock; keep game-specific adapters only where they do not fit. Measure actual 8088 rendering costs
 before replacing optimized code. This repository does not claim a complete
 game engine, NES emulation, 60 FPS rendering or physical EX qualification.
 

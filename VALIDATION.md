@@ -52,3 +52,29 @@ standalone MIDI parser/renderer under `sound/`.
 
 The branch is a local review candidate only. No commit, push, pull request,
 emulator run, or physical hardware run was performed.
+
+## DOS platform services (pages, held keys, update clock, memory)
+
+Branch `claude/dos-platform-services`, based on main `94cf89f`.
+
+- Host: `python3 tools/build.py --target host --cc gcc` (GCC, Linux): all
+  suites pass, including the new `keys` suite and the `lt_gfx` row, box
+  copy, packed blit and wrapped-scroll checks.
+- DOS: `python3 tools/build.py --target dos --watcom <Open Watcom 1.9>`
+  (Linux host layout now supported): all modules, demos and test
+  executables compile with `-0 -ms -ecc -os -s -w4 -wx`; the only warnings
+  are the existing W124 in `lt_time.c` and W201 in a test.
+- 86Box 6.0, Tandy 1000 HX (8088 7.16 MHz, 640 KiB, DOS 6), each demo run
+  under a batch file that afterwards waits for a key with `CHOICE`:
+  - PAGEDEMO: two pages, 48 KiB (49,152 bytes) reserved, 84 flips without a
+    sync timeout; DOS keyboard normal afterwards.
+  - KEYDEMO: up to 4 keys held at once (the HX keyboard's own arrow codes
+    29h/2Bh plus Space); the square moved diagonally; vector restored; DOS
+    keyboard normal afterwards (`CHOICE` took the next key).
+  - TICKDEMO: 2,014 updates in 40,048,449 PIT cycles = 60.004 Hz over the
+    sampled window; 3.296 updates per BIOS tick (BIOS clock kept); frame
+    count fell while Space slowed drawing but updates did not; no backlog;
+    vector and PIT restored.
+- Not checked: audibility of TICKDEMO's beeps (86Box audio not captured),
+  a real Tandy 1000 EX or HX, other Tandy models, chain mode of the keyboard
+  service.

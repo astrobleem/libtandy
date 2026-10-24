@@ -52,4 +52,33 @@ void lt_gfx_glyph8(lt_gfx_surface *surface, lt_gfx_i16 x, lt_gfx_i16 y,
                    const lt_gfx_u8 rows[8], lt_gfx_u8 foreground,
                    lt_gfx_u8 background, int transparent);
 
+/* Row access and block moves for frame composition (C89, no BIOS). Rows
+ * are 160 bytes, two pixels per byte (left pixel in the high nibble), in
+ * the mode-9 layout of four 8 KiB banks: row y starts at
+ * (y & 3) * 8192 + (y >> 2) * 160. All byte columns are 0..159. */
+#define LT_GFX_ROW_BYTES 160U
+
+/* Far pointer to byte 0 of row y, or NULL for an invalid surface/row. */
+lt_gfx_u8 LT_GFX_FAR *lt_gfx_row(const lt_gfx_surface *surface,
+                                 lt_gfx_i16 y);
+/* Copy byte columns [b0,b1) of rows [y0,y1) from src to dst, both in the
+ * mode-9 layout (e.g. restore a dirty box from a background page). Bounds
+ * are clipped; src and dst must not overlap unless they are equal. */
+void lt_gfx_copy_rows(lt_gfx_surface *dst, const lt_gfx_surface *src,
+                      lt_gfx_i16 y0, lt_gfx_i16 y1,
+                      lt_gfx_i16 b0, lt_gfx_i16 b1);
+/* Copy a packed linear image (rows of src_stride bytes, two pixels per
+ * byte) into the surface: rows rows of width bytes to byte column bx, row
+ * y. Clipped to the screen; source pixels are opaque. */
+void lt_gfx_blit_packed(lt_gfx_surface *surface, lt_gfx_i16 bx,
+                        lt_gfx_i16 y, const lt_gfx_u8 LT_GFX_FAR *src,
+                        unsigned src_stride, lt_gfx_i16 width,
+                        lt_gfx_i16 rows);
+/* Wrapped horizontal scroll of one row: dst[i] = src[(i + rotate) % width]
+ * for i in [0,width), width 1..160 bytes (a 2-pixel step per byte). dst and
+ * src must not overlap. Used to scroll a repeating background band. */
+void lt_gfx_copy_wrapped(lt_gfx_u8 LT_GFX_FAR *dst,
+                         const lt_gfx_u8 LT_GFX_FAR *src, unsigned width,
+                         unsigned rotate);
+
 #endif
