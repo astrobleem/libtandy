@@ -9,10 +9,10 @@ back on close, also after a failed open.
 | Header | Resource | Code (8088, `-os`) | Data |
 | --- | --- | --- | --- |
 | `lt_page_dos.h` | second video page, page register | 1,157 bytes | 1 byte + the `ltpg_pages` object (about 40 bytes) |
-| `lt_keys_dos.h` + `lt_keys.h` | IRQ1 | 406 + 464 bytes | 58 bytes |
+| `lt_keys_dos.h` + `lt_keys.h` | IRQ1 | 446 + 456 bytes | 58 bytes |
 | `lt_tick_dos.h` | IRQ0 / PIT channel 0 | 839 bytes | 3,112 bytes (3 KiB private stack) |
 | `lt_mem_dos.h` | DOS memory blocks | 413 bytes | the `ltmem_pool` object (108 bytes) |
-| `lt_gfx.h` additions (`lt_gfx_rows.c`) | (none) | 551 bytes | none |
+| `lt_gfx.h` additions (`lt_gfx_rows.c`) | (none) | 555 bytes | none |
 
 ## Two pages (`lt_page_dos.h`)
 
@@ -47,7 +47,9 @@ update runs; without one it polls status bit 3 a bounded number of times.
 `ltkb_open` installs an IRQ1 handler that feeds every scan byte into a
 decoder, so any number of keys can be held and every press and release
 between two polls is reported (`held`, `pressed`, `released`;
-`ltkb_active` = held or tapped since the last poll). Enhanced-keyboard gray
+`ltkb_active` = held or tapped since the last poll; `LTKB_BIT` tests a bit
+without a call; `ltkb_down_now` reads one key's live state without taking a
+snapshot, e.g. a quit key checked every frame). Enhanced-keyboard gray
 keys report the keypad code; fake shifts and Pause are dropped. Tandy 1000
 keyboards send their own codes for some keys (arrows 29h/2Bh/4Ah/4Eh), so
 games map both sets.
@@ -123,3 +125,16 @@ lt_dos_app_shutdown(&app);
 
 `examples/page_demo.c`, `keys_demo.c` and `tick_demo.c` (PAGEDEMO, KEYDEMO,
 TICKDEMO) show each service on its own with original graphics and sound.
+
+## Cost in a real game
+
+The native JAWS port (private) was rebuilt with these services in place of
+its own page, tick and keyboard modules and compared with its reference
+build on 86Box (Tandy 1000 HX): the load image grew by 2,080 bytes (more
+general page/key code, the memory pool, the row routines module), update
+work by about 75 PIT cycles (63 microseconds) per 60 Hz tick (one key
+snapshot per tick), and time per presented frame by 0-5% in most scenes
+(up to 14% on one short map window whose frames happened to fall just past a
+refresh boundary; in live map play the per-frame time was the same). Its
+recorded-play comparisons and memory-boundary tests were repeated with the
+same results apart from the 2 KB.
