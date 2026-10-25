@@ -1,0 +1,75 @@
+{
+  "title": "Doebelinschmirtz Incorporated — private PSG sketch",
+  "status": "LOCAL DEVELOPER AUDITION; native testing and explicit publication approval pending",
+  "reference": {
+    "title": "Evil Jingle (from Phineas and Ferb), opening measures 1–3",
+    "publisher_preview": "https://www.musicnotes.com/sheetmusic/sheet-music-boss/evil-jingle/MN0202127",
+    "preview_image": "https://www.musicnotes.com/product/image/MN0202127/large",
+    "arranger_page": "https://sheetmusicboss.com/2019/10/21/evil-jingle-from-phineas-and-ferb-piano-tutorial/",
+    "credit": "Words/music credited on preview to Danny Jacob, Jeff Marsh, Jon Barry, Zac Moncrief, Dan Povenmire and J.G. Orrantia; piano arrangement Andrew Wrangell; edited Samuel Dickenson.",
+    "scope": "Melody transcribed from the visible licensed opening preview. Three-tone reduction, approximate 2:1 swing and PSG articulation are arrangement decisions, not an exact recording recreation. No reference recording or score image is distributed."
+  },
+  "ppq": 192,
+  "tempo_us": 355030,
+  "tempo_bpm_reference": 169,
+  "psg_clock_hz": 3579545,
+  "service_hz": 240,
+  "one_shot_end_tick": 2304,
+  "silent_loop_start_tick": 2112,
+  "noise": "muted",
+  "pc_speaker": "unused",
+  "master_linear_gain": 0.18,
+  "normalization": "none; all stems and mix use identical gain",
+  "voices": [
+    {
+      "channel": 0,
+      "role": "reference melody",
+      "attenuation": 2,
+      "release_gap_ticks": 4,
+      "notes": [
+        {"id":"M01","start":0,"end":128,"pitch":"F4","reference":"m1 beat1, swung eighth"},
+        {"id":"M02","start":128,"end":192,"pitch":"D4","reference":"m1 offbeat1, swung eighth"},
+        {"id":"M03","start":192,"end":384,"pitch":"F4","reference":"m1 beat2, quarter"},
+        {"id":"M04","start":384,"end":512,"pitch":"G#4","reference":"m1 beat3, swung eighth, written sharp"},
+        {"id":"M05","start":512,"end":576,"pitch":"E4","reference":"m1 offbeat3, swung eighth"},
+        {"id":"M06","start":576,"end":768,"pitch":"G#4","reference":"m1 beat4, quarter"},
+        {"id":"M07","start":768,"end":960,"pitch":"B4","reference":"m2 beat1, quarter"},
+        {"id":"M08","start":960,"end":1088,"pitch":"B4","reference":"m2 beat2, swung eighth"},
+        {"id":"M09","start":1088,"end":1280,"pitch":"B4","reference":"m2 offbeat2 tied through beat3, combined as one event"},
+        {"id":"M10","start":1280,"end":2112,"pitch":"B4","reference":"m2 offbeat3 tied into m3 dotted half; one event, final beat rests"}
+      ]
+    },
+    {
+      "channel": 1,
+      "role": "reduced inner harmony; omissions intentional",
+      "attenuation": 9,
+      "release_gap_ticks": 6,
+      "notes": [
+        {"id":"H01","start":0,"end":128,"pitch":"C4"},
+        {"id":"H02","start":192,"end":384,"pitch":"C4"},
+        {"id":"H03","start":384,"end":512,"pitch":"E4"},
+        {"id":"H04","start":576,"end":768,"pitch":"E4"},
+        {"id":"H05","start":768,"end":960,"pitch":"G4"},
+        {"id":"H06","start":960,"end":1088,"pitch":"G4"},
+        {"id":"H07","start":1088,"end":1280,"pitch":"G4"},
+        {"id":"H08","start":1280,"end":2112,"pitch":"G4"}
+      ]
+    },
+    {
+      "channel": 2,
+      "role": "reference bass D2/E2/C2 raised one octave for PSG range",
+      "attenuation": 7,
+      "release_gap_ticks": 8,
+      "notes": [
+        {"id":"B01","start":0,"end":192,"pitch":"D3"},
+        {"id":"B02","start":192,"end":384,"pitch":"D3"},
+        {"id":"B03","start":384,"end":576,"pitch":"E3"},
+        {"id":"B04","start":576,"end":768,"pitch":"E3"},
+        {"id":"B05","start":768,"end":960,"pitch":"C3"},
+        {"id":"B06","start":960,"end":1088,"pitch":"C3"},
+        {"id":"B07","start":1088,"end":1280,"pitch":"C3"},
+        {"id":"B08","start":1280,"end":2112,"pitch":"C3"}
+      ]
+    }
+  ]
+}

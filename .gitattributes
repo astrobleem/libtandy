@@ -3,3 +3,7 @@
 *.py text eol=lf
 *.md text eol=lf
 *.json text eol=lf
+
+# Preserve the approved binary stream and literal per-note audit bytes.
+examples/doebel/DOEBEL.VGM binary
+examples/doebel/NOTES.csv binary

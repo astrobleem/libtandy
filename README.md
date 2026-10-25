@@ -139,3 +139,9 @@ non-owning speaker callback contract. `examples/dos_sfx_demo.c` builds as
 finite harpoon, silent gap, conch and all-channel stop sequence from
 foreground retrace polling only.
 
+[`examples/doebel/`](examples/doebel/README.md) adds an optional three-tone
+"Doebelinschmirtz Incorporated" jingle example using `lt_score`.
+`DOEBEL.EXE` plays it once in foreground DOS; the checked-in score header and
+PSG VGM need no Python preparation. The recognizable tune is a reduction of
+the referenced *Evil Jingle*, with separate musical attribution in the example.
+

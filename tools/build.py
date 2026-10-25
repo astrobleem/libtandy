@@ -12,6 +12,7 @@ TESTS = {
     'audio': ('audio_core', ['lt_chip', 'lt_audio']),
     'sfx': ('sfx_core', ['lt_chip', 'lt_audio', 'lt_sfx']),
     'score': ('score_core', ['lt_chip', 'lt_audio', 'lt_sfx', 'lt_score']),
+    'dbscore': ('doebel_score_core', ['lt_chip', 'lt_audio', 'lt_score']),
     'graphics': ('gfx_host', ['lt_gfx', 'lt_gfx_rows']),
     'surface': ('surface_core', ['lt_surface']),
     'time': ('time_core', ['lt_time']),
@@ -21,6 +22,9 @@ TESTS = {
 }
 # DOS-only demos of the platform services: name -> sources.
 DOS_DEMOS = {
+    'DOEBEL': ['examples/doebel_demo.c', 'src/lt_chip.c',
+               'src/lt_audio.c', 'src/lt_score.c', 'adapters/lt_dos.c',
+               'adapters/lt_tick_dos.c'],
     'PAGEDEMO': ['examples/page_demo.c', 'src/lt_chip.c', 'src/lt_gfx.c',
                  'src/lt_event.c', 'adapters/lt_dos.c',
                  'adapters/lt_input_dos.c', 'adapters/lt_dos_app.c',
@@ -82,6 +86,9 @@ def main():
         if result.returncode:
             raise RuntimeError(label + ': ' + result.stdout + result.stderr)
         return result
+
+    run([sys.executable, ROOT / 'examples/doebel/generate.py', '--check'],
+        'doebel score data')
 
     if args.target == 'dos':
         watcom = args.watcom.resolve()

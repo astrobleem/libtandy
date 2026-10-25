@@ -1,0 +1,56 @@
+{
+  "status": "PASS: host checks only; no native/hardware/audible qualification",
+  "reference": {
+    "title": "Evil Jingle (from Phineas and Ferb), opening measures 1\u20133",
+    "publisher_preview": "https://www.musicnotes.com/sheetmusic/sheet-music-boss/evil-jingle/MN0202127",
+    "preview_image": "https://www.musicnotes.com/product/image/MN0202127/large",
+    "arranger_page": "https://sheetmusicboss.com/2019/10/21/evil-jingle-from-phineas-and-ferb-piano-tutorial/",
+    "credit": "Words/music credited on preview to Danny Jacob, Jeff Marsh, Jon Barry, Zac Moncrief, Dan Povenmire and J.G. Orrantia; piano arrangement Andrew Wrangell; edited Samuel Dickenson.",
+    "scope": "Melody transcribed from the visible licensed opening preview. Three-tone reduction, approximate 2:1 swing and PSG articulation are arrangement decisions, not an exact recording recreation. No reference recording or score image is distributed."
+  },
+  "libtandy_commit": "5d7036b9cdd23be9a0a3be7e9bc53c81680b055d",
+  "core_files": {
+    "lt_chip.c": "277505ef3f6c0eaa6e0aa51c1f7577f6420bb25c0b33726431c7413fd9998148",
+    "lt_audio.c": "c0869860a031f8ced684725eb9464c2fd987f61ac9952a826fdbe41e3394c688",
+    "lt_score.c": "e05088bde51a3b9ac5227993c424a40b6844035136068a04c23e1d85f729e737"
+  },
+  "sample_rate": 44100,
+  "duration_seconds": 4.512517006802721,
+  "service_hz": 240,
+  "score_ticks_per_second": 541,
+  "scheduler_phase_step": 147729,
+  "host_model": "8x oversampled ideal square waves, 2 dB PSG attenuation steps, mono sum; no analog filtering, speaker or noise",
+  "master_linear_gain": 0.18,
+  "normalization": "none",
+  "mix_peak": 0.17214770108816962,
+  "mix_peak_dbfs": -15.281975452376834,
+  "mix_rms": 0.10714142758052447,
+  "per_voice_peak": [
+    0.11357232200643479,
+    0.02266065741229501,
+    0.035914721669439834
+  ],
+  "per_voice_rms": [
+    0.099524136289553,
+    0.01936245481735165,
+    0.03172907993812419
+  ],
+  "note_count": [
+    10,
+    8,
+    8
+  ],
+  "checked_notes": 26,
+  "all_notes_passed": true,
+  "clipped_samples": 0,
+  "final_attenuation": [
+    15,
+    15,
+    15,
+    15
+  ],
+  "silent_tail_seconds": 0.25,
+  "vgm_stream_matches_trace": true,
+  "vgm_loop": false,
+  "publication": "NOT APPROVED; native test and explicit publication approval required"
+}

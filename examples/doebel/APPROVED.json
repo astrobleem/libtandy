@@ -1,0 +1,24 @@
+{
+  "listening_approval": "Chad heard and approved DOEBEL-HOST.WAV on 2026-10-25; requested optional libtandy example",
+  "native_status": "passed normal completion, Escape cleanup and timer restoration on emulated Tandy HX; see NATIVE.json",
+  "publication": "approved by Chad on 2026-10-25",
+  "reference_wav_sha256": "9bd189015904bda25c5e75dff501696a7641934bb3ffeec87e3278f719d00b0d",
+  "reference_trace_sha256": "7d36113c4de4a210990410ddc2804a450a25fa419677f3dbb9c21213124a080c",
+  "per_note_audit_sha256": "d2de6d6634df6d537b78c4143e8c098f9dd46a3667b1e13f9fa8152876c3e6ae",
+  "score_json_sha256": "f1d913b8a3ef83cb692dbadd20341470469295632e4f1f7bb2204f89fcf47661",
+  "vgm_sha256": "2e495869bf4712937bfc296dc7be192147527cbc43a5f284f0867859779ebff3",
+  "frames": 1023,
+  "service_hz": 240,
+  "notes": [
+    10,
+    8,
+    8
+  ],
+  "gain": 0.18,
+  "native_attenuation": [
+    2,
+    9,
+    7
+  ],
+  "psg_writes": 173
+}
