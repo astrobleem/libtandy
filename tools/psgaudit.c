@@ -1,4 +1,4 @@
-/* psg_audition.c - developer A/B audition of the MIDI PSG instrument banks.
+/* psgaudit.c - developer A/B audition of the MIDI PSG instrument banks.
 
    Each scene's event list is built once and sent through the real synth
    (MSReset, MSBank, MSMessage, MSRender from sound/MIDISYN.C) once per
@@ -9,7 +9,7 @@
    per-voice gains and no normalization. It is NOT Tandy 1000 output.
    Host-only developer tool; no driver or foreground code uses it.
 
-   Usage: psg_audition <outdir>
+   Usage: psgaudit <outdir>  (outdir must already exist)
    The directory must already exist. Writes <scene>_default.wav,
    <scene>_chamber.wav, <scene>_ab.wav and report.txt. */
 
@@ -569,7 +569,7 @@ static int WriteReport(const char *dir)
     f = fopen(path, "w");
     if (!f) return 1;
 
-    fprintf(f, "psg_audition report\n\n");
+    fprintf(f, "psgaudit report\n\n");
     fprintf(f, "Host-rendered approximation, NOT real Tandy 1000 output.\n\n");
     fprintf(f, "Engine: real synth, sound/MIDISYN.C and sound/INSTR.C\n");
     fprintf(f, "  (MSReset, MSBank, MSMessage, MSRender). Banks: default =\n");
@@ -641,7 +641,7 @@ int main(int argc, char **argv)
     unsigned scene, bank;
 
     if (argc != 2) {
-        fprintf(stderr, "usage: psg_audition <outdir>\n");
+        fprintf(stderr, "usage: psgaudit <outdir>\n");
         return 2;
     }
     for (scene = 0; scene < SCENE_COUNT; scene++) {

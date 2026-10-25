@@ -152,7 +152,7 @@ and held level.
 Tests (`sound/tests/run.py`): `portable_midi.c`, `bank_test.c`, and
 `trace_default.c`, whose embedded hash was taken from the pristine 5d7036b
 tree, so Default equivalence is checked without that tree. Developer audition:
-`tools/psg_audition.c <outdir>` renders host WAVs (an approximation, not Tandy
+`tools/psgaudit.c <outdir>` (the directory must exist) renders host WAVs (an approximation, not Tandy
 output) from the real synth; no normalization is applied.
 
 Integration checklist for the Windows player:
@@ -178,7 +178,7 @@ builds all of these with an ordinary `--cc`):
 ```powershell
 python C:/Users/chad/Documents/Codex/toolchains/gcc-ucrt64.py -- -x c -std=c89 -pedantic-errors -Wall -Wextra -Werror -Wno-misleading-indentation -Wno-sign-compare -Wno-unused-function -O2 -DSYNTH_HOST -I sound sound/INSTR.C sound/MIDISYN.C sound/tests/bank_test.c -o build/host/bank_test.exe
 python C:/Users/chad/Documents/Codex/toolchains/gcc-ucrt64.py -- ... -DWITH_BANK -I sound sound/INSTR.C sound/MIDISYN.C sound/tests/trace_default.c -o build/host/trace_default.exe
-python C:/Users/chad/Documents/Codex/toolchains/gcc-ucrt64.py -- ... -I sound sound/INSTR.C sound/MIDISYN.C tools/psg_audition.c -o build/host/psg_audition.exe
+python C:/Users/chad/Documents/Codex/toolchains/gcc-ucrt64.py -- ... -I sound sound/INSTR.C sound/MIDISYN.C tools/psgaudit.c -o build/host/psgaudit.exe
 ```
 
 Size notes (Open Watcom `-ms -0 -os`, not MSC 6.0 or the Win16 DLL model):
