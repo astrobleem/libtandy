@@ -129,3 +129,43 @@ the POSIX/ordinary compiler recipe; it accepts one executable and cannot
 invoke the Python launcher via multiword `--cc`. Use the explicit Windows
 command above. Integration MIDI checks are in libwintandy `docs/BUILD.TXT`.
 Host checks do not qualify native timing, audio or code size.
+
+## Implementation: Default and Chamber banks (branch feat/psg-alt-bank)
+
+API (`MIDISYN.H`): `MS_BANK_DEFAULT` 0, `MS_BANK_CHAMBER` 1, and
+`LTP_U16 MSBank(MSYN *,LTP_U16)`, which returns 0 on success and nonzero with
+state unchanged for any other ID. The bank is latched into `TVOICE.bank` at
+melodic note-on, so held, pedal-released and already-sounding voices keep
+their curve; the next note-on uses the new bank. Percussion (`voice[3]`) and
+speaker routing ignore banks. `MSReset` zero-fills `MSYN`, so it restores
+Default; callers re-apply their choice after every reset. CC0/CC32,
+CC121/123, program change and `MDVoiceMode` do not touch the bank.
+
+Data: `curves` grows from 11 to 19 rows; rows 11..18 are the Chamber
+melodic presets (plucked keys, swelling organ, soft bass, slow pad, breathy
+reed, fading lead, mallet, blip). Lookup is `preset+11` when the voice's bank
+is nonzero. Vibrato still keys off presets 3..5, so Chamber pad, reed and
+lead keep vibrato. Chamber peaks match Default; contrast is attack, decay
+and held level.
+
+Tests (`sound/tests/run.py`): `portable_midi.c`, `bank_test.c`, and
+`trace_default.c`, whose embedded hash was taken from the pristine 5d7036b
+tree, so Default equivalence is checked without that tree. Developer audition:
+`tools/psg_audition.c <outdir>` renders host WAVs (an approximation, not Tandy
+output) from the real synth; no normalization is applied.
+
+Integration checklist for the Windows player:
+1. Port by hunk, never wholesale: `TVOICE.bank` (INSTR.H); `curves[19]`,
+   `InstStart` `bank=0`, and the row lookup (INSTR.C; these files match
+   across all three trees); `MSYN.bank`, `MSBank` and the single line
+   `s->voice[slot].bank=s->bank;` after the melodic `InstStart` (MIDISYN.*).
+   Keep the Windows speaker-fallback and streamed-MIDI changes.
+2. Call `MSBank` on both `synth` and `folded` in MIDICLK, and re-apply the
+   selection after every `MSReset` (open, seek, reopen).
+3. `LIVEMIDI.H` seeds programs from `voice[i].preset<<4`; it ignores `bank`,
+   so a live seed would revert Chamber voices to Default. Decide whether to
+   carry the bank in the seed.
+4. Add an explicit setter/export and UI; do not reuse CC0/CC32 or
+   `MDVoiceMode`. Keep the `SOURCE.json` hashes and the OEMSound mirror in step.
+5. Qualify natively: Win16 code/DGROUP sizes, MIDICLK segment limits, and
+   listening on real hardware. None of that has been done.
