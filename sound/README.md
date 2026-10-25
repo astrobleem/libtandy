@@ -1,8 +1,8 @@
 # Portable MIDI core
 
 This is the first-party, MIT-licensed foreground MIDI parser and renderer from
-the approved playback-opt9 engine. The 11 core files are preserved byte for
-byte; `SOURCE.json` records their SHA-256 hashes. They use C89, fixed-size
+the approved playback-opt9 engine. The 11 core files are unchanged except the
+selectable-bank edits in `INSTR.*` and `MIDISYN.*`; `SOURCE.json` records their current SHA-256 hashes. They use C89, fixed-size
 state, integer arithmetic, and no OS, heap, port-I/O, timer, interrupt, or
 third-party instrument-bank dependency. The local instrument curves in
 `INSTR.C` are code tables, not imported patches or song assets.
@@ -28,7 +28,9 @@ are octave-folded into the PIT range. The PSG's 10-bit integer divider
 quantizes pitches, especially high notes: labels 126 and 127 both use divider
 8. Acceptance of 114 nominal labels 14–127 does **not** imply 114 distinct or
 perfectly tuned pitches. Drum note-on admission is 35–81 on MIDI channel 10.
-One local instrument bank is supported; nonzero bank selection is rejected.
+MIDI bank-select (CC0/CC32) is still rejected. Instrument banks are chosen by
+the host API `MSBank` (`MS_BANK_DEFAULT`, `MS_BANK_CHAMBER`); see
+[`docs/PSG-BANKS.md`](../docs/PSG-BANKS.md).
 
 On a host with a C89 compiler, run `python sound/tests/run.py --cc cc`.
 `CORE-MIT.TXT` contains the required notice for this module.
