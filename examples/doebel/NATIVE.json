@@ -1,0 +1,54 @@
+{
+  "complete": true,
+  "date": "2026-10-25",
+  "scope": [
+    "normal completion",
+    "Escape cleanup",
+    "IRQ0 and timer restoration"
+  ],
+  "machine": {
+    "emulator": "86Box, local fixed build",
+    "emulator_sha256": "047477bb6f5d8681e08d6d5587aaab4285800c2f4efbb41549ccf75285974b1c",
+    "model": "Tandy 1000 HX",
+    "cpu": "8088",
+    "cpu_hz": 7159092,
+    "memory_kib": 640,
+    "dos": "MS-DOS 6.22"
+  },
+  "executable": {
+    "name": "DOEBEL.EXE",
+    "bytes": 14826,
+    "sha256": "a3857b85df56b2ff7d031916852f58ec9f64ac3e06bd1296d06b7f8d139026a9"
+  },
+  "before_irq0_vector_bytes": "a5fe00f0",
+  "normal": {
+    "exit_status": 0,
+    "active_irq0_vector_bytes": "e021d00e",
+    "bios_ticks_including_load": 95,
+    "restored": {
+      "irq0_vector": "a5fe00f0",
+      "matches_before": true,
+      "pit_counter": 54256,
+      "bios_ticks_over_approx_0_31_seconds": 6
+    },
+    "output": "Doebelinschmirtz Incorporated - optional PSG example\r\nOne jingle; Escape cancels. Use exclusive foreground Tandy DOS.\r\nDOEBEL: stopped, PSG muted\r\n"
+  },
+  "escape": {
+    "exit_status": 0,
+    "active_irq0_vector_bytes": "e021d00e",
+    "bios_ticks_from_active_playback": 8,
+    "restored": {
+      "irq0_vector": "a5fe00f0",
+      "matches_before": true,
+      "pit_counter": 28320,
+      "bios_ticks_over_approx_0_31_seconds": 6
+    },
+    "output": "Doebelinschmirtz Incorporated - optional PSG example\r\nOne jingle; Escape cancels. Use exclusive foreground Tandy DOS.\r\nDOEBEL: stopped, PSG muted\r\n"
+  },
+  "shared_lease_acquired": true,
+  "owned_child_stopped": true,
+  "shared_lease_released": true,
+  "physical_hardware_test": false,
+  "native_audio_capture": false,
+  "publication": "approved by Chad on 2026-10-25"
+}
