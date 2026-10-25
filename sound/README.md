@@ -30,7 +30,7 @@ quantizes pitches, especially high notes: labels 126 and 127 both use divider
 perfectly tuned pitches. Drum note-on admission is 35–81 on MIDI channel 10.
 MIDI bank-select (CC0/CC32) is still rejected. Instrument banks are chosen by
 the host API `MSBank` (`MS_BANK_DEFAULT`, `MS_BANK_CHAMBER`); see
-`docs/PSG-BANKS.md`.
+[`docs/PSG-BANKS.md`](../docs/PSG-BANKS.md).
 
 On a host with a C89 compiler, run `python sound/tests/run.py --cc cc`.
 `CORE-MIT.TXT` contains the required notice for this module.

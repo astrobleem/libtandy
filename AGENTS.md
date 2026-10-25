@@ -5,8 +5,7 @@ instrument banks, start in `sound/INSTR.C` and `sound/MIDISYN.C`, not the
 native `src/lt_audio.c` / `lt_score.c` / `lt_sfx.c` APIs. Read
 [`docs/PSG-BANKS.md`](docs/PSG-BANKS.md) before changing the bank contract.
 
-- Keep the existing bank as Default, with identical output. The next bank
-  task adds one contrasting bank and a developer host A/B audition using
+- Keep the existing bank as Default, with identical output. Chamber adds one contrasting bank; the developer host A/B audition uses
   identical notes, timing, programs and controllers. No accepted song edits,
   SoundFont/sample claims, extra sound driver or consumer Python preparation.
 - `sound/` owns portable instrument behavior; libwintandy owns Windows
@@ -16,7 +15,7 @@ native `src/lt_audio.c` / `lt_score.c` / `lt_sfx.c` APIs. Read
   I/O, timer ownership or interrupt work in the portable renderer. Preserve
   16-bit near/far contracts and bounded work after long foreground stalls.
 - `MSReset`, `MSSpeakerMode` and flags control existing behavior; the
-  selector is `MSBank` (Default/Chamber), added on branch feat/psg-alt-bank. Preserve controller, allocation, reset and mute
+  selector is `MSBank` (Default/Chamber). Preserve controller, allocation, reset and mute
   semantics. Direct state changes require `MSInvalidate` before rendering.
 - Host GCC checks do not qualify 8088 code size, Win16 DGROUP/ABI, audibility
   or hardware timing. Report those separately and measure added table/state
@@ -25,8 +24,8 @@ native `src/lt_audio.c` / `lt_score.c` / `lt_sfx.c` APIs. Read
 - On Chad's Windows host, run GCC only through
   `C:\Users\chad\Documents\Codex\toolchains\gcc-ucrt64.py`; never start raw
   GCC/cc1. Uppercase `.C` inputs need `-x c`. Developer Python is allowed.
-- For the current documentation/bank handoff, do not launch emulators or
-  touch the separate VGM player/format/decompression task. Keep changes in
+- For portable bank changes, do not launch emulators or touch the separate
+  Windows player, transport or format/decompression task. Keep changes in
   isolated checkouts. Publication requires explicit approval.
 
 There is no `BUILDING` file: `README.md`, `tools/build.py`, and

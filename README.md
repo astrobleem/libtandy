@@ -95,12 +95,13 @@ needed. The launcher runs its DLL preflight before compiler startup. These
 options do not change the DOS build.
 
 On Chad's Windows host, use the established launcher; do not start raw
-GCC/cc1. The standalone MIDI runner accepts only one compiler executable,
-so its Windows invocation is documented separately in
-[the PSG bank source map](docs/PSG-BANKS.md#windows-host-checks).
+GCC/cc1. Both host runners accept the approved launcher. Selectable
+Default/Chamber banks and the per-note audition regression are documented
+in [the PSG bank source map](docs/PSG-BANKS.md).
 
 ```powershell
 python tools/build.py --target host --gcc-launcher C:/Users/chad/Documents/Codex/toolchains/gcc-ucrt64.py --runtime-bin C:/msys64/ucrt64/bin
+python sound/tests/run.py --gcc-launcher C:/Users/chad/Documents/Codex/toolchains/gcc-ucrt64.py
 ```
 
 Build logs and a result manifest are local under `build/`. Host tests exercise
