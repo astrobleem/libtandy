@@ -3,8 +3,8 @@
 Audited against libtandy main `8a0313625382bf1b9fd16843336d9f4b2f577e44`,
 libwintandy main `0e2a65eeedd2b49d5b5fce689eeac39e97fb9477`, and
 OEMSound main `537ebc5363c3d6750f554bb955d96ec9f4ce833f` on 2026-10-25.
-This guides future implementation; this documentation change adds no bank
-or selection API.
+This section describes the pre-bank state; the canonical implementation is
+documented at the end of this file.
 
 ## Source ownership
 
@@ -69,7 +69,8 @@ Windows `MDVoiceMode` (export ordinal 16) accepts flags 0, 1 or 3 in
 and `committed` must both be zero); `MDOpen` defaults voice flags to 1.
 This controls envelopes/vibrato, not banks. The older direct-driver
 `MODM_SYNTHCONFIG` in `MIDIAPI.H` also controls flags. No bank field, setter
-or export exists in `MSYN` / `MDAPI.H`; player MCI `MC_SET` handles time
+or export exists in the Windows `MDAPI.H` (pre-port; canonical `MSYN`
+now has `MSBank`, see the end of this file); player MCI `MC_SET` handles time
 format only.
 
 Low-level `MIDIMSG.H` rejects nonzero CC0/CC32. The Windows file producer
@@ -169,3 +170,20 @@ Integration checklist for the Windows player:
    `MDVoiceMode`. Keep the `SOURCE.json` hashes and the OEMSound mirror in step.
 5. Qualify natively: Win16 code/DGROUP sizes, MIDICLK segment limits, and
    listening on real hardware. None of that has been done.
+
+Host commands for the new checks (same wrapper and flags as above; add
+`-DWITH_BANK` to `trace_default.c` to cover `MSBank(0)` as a no-op; `run.py`
+builds all of these with an ordinary `--cc`):
+
+```powershell
+python C:/Users/chad/Documents/Codex/toolchains/gcc-ucrt64.py -- -x c -std=c89 -pedantic-errors -Wall -Wextra -Werror -Wno-misleading-indentation -Wno-sign-compare -Wno-unused-function -O2 -DSYNTH_HOST -I sound sound/INSTR.C sound/MIDISYN.C sound/tests/bank_test.c -o build/host/bank_test.exe
+python C:/Users/chad/Documents/Codex/toolchains/gcc-ucrt64.py -- ... -DWITH_BANK -I sound sound/INSTR.C sound/MIDISYN.C sound/tests/trace_default.c -o build/host/trace_default.exe
+python C:/Users/chad/Documents/Codex/toolchains/gcc-ucrt64.py -- ... -I sound sound/INSTR.C sound/MIDISYN.C tools/psg_audition.c -o build/host/psg_audition.exe
+```
+
+Size notes (Open Watcom `-ms -0 -os`, not MSC 6.0 or the Win16 DLL model):
+INSTR `_TEXT` +19, `_DATA` +128 (table 176 to 304 B), MIDISYN `_TEXT` +47.
+`MSYN` stays 330 B at default 2-byte packing because `bank` and `TVOICE.bank`
+use existing padding; under `-Zp1` it grows by 5 B (+10 B for `synth` and
+`folded`). No `-Zp` appears in the libwintandy sources checked; the Windows
+`MSYN` has the same odd `LTP_U8` run. Confirm against the native map.

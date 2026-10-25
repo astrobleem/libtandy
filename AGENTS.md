@@ -15,8 +15,8 @@ native `src/lt_audio.c` / `lt_score.c` / `lt_sfx.c` APIs. Read
 - Use C89, fixed-size state and integer arithmetic. No heap, OS calls, port
   I/O, timer ownership or interrupt work in the portable renderer. Preserve
   16-bit near/far contracts and bounded work after long foreground stalls.
-- `MSReset`, `MSSpeakerMode` and flags control existing behavior; no bank
-  selector exists yet. Preserve controller, allocation, reset and mute
+- `MSReset`, `MSSpeakerMode` and flags control existing behavior; the
+  selector is `MSBank` (Default/Chamber), added on branch feat/psg-alt-bank. Preserve controller, allocation, reset and mute
   semantics. Direct state changes require `MSInvalidate` before rendering.
 - Host GCC checks do not qualify 8088 code size, Win16 DGROUP/ABI, audibility
   or hardware timing. Report those separately and measure added table/state

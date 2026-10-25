@@ -1,8 +1,8 @@
 # Portable MIDI core
 
 This is the first-party, MIT-licensed foreground MIDI parser and renderer from
-the approved playback-opt9 engine. The 11 core files carry the selectable-bank
-change; `SOURCE.json` records their current SHA-256 hashes. They use C89, fixed-size
+the approved playback-opt9 engine. The 11 core files are unchanged except the
+selectable-bank edits in `INSTR.*` and `MIDISYN.*`; `SOURCE.json` records their current SHA-256 hashes. They use C89, fixed-size
 state, integer arithmetic, and no OS, heap, port-I/O, timer, interrupt, or
 third-party instrument-bank dependency. The local instrument curves in
 `INSTR.C` are code tables, not imported patches or song assets.
