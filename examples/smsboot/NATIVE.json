@@ -1,0 +1,72 @@
+{
+  "complete": true,
+  "stroke_logo_run": {
+    "complete": true,
+    "started": "2026-10-26T19:58:50.549746+00:00",
+    "requested_cpu_hz": 4772728,
+    "SMSBOOT.EXE": {
+      "bytes": 16440,
+      "sha256": "45a92cbf36bf9198fa3681679adf472ba6e1e549afaa884378ca2d2efe9d50aa"
+    },
+    "TANDYLOG.EXE": {
+      "bytes": 54888,
+      "sha256": "90d56031c75ed5c79abb5c7587c618becf9c6599a9f1db654d65e635bd67c20c"
+    },
+    "lease_acquired": true,
+    "owned_pid": 26584,
+    "logo_timer_restored_while_holding": {
+      "irq0_restored": true,
+      "bios_ticks_over_approx_0_31s": 6
+    },
+    "logo_cleanup": {
+      "irq0_restored": true,
+      "bios_ticks_over_approx_0_31s": 6
+    },
+    "LOGO.LOG": "TRACE settled=421 tagline=481 misses=0 steps=52 phases=3\r\nTRACE clocks=69879,75497,81286 budget_ticks=23 max_audio_delay=811\r\nPSG records=714 overflow=0 irq_late=2\r\nSMS boot: stopped, PSG muted\r\n",
+    "PSG_trace_bytes": 2142,
+    "owned_child_stopped": true,
+    "lease_released": true
+  },
+  "timing_and_visual_check": {
+    "native_complete": true,
+    "configured_cpu_hz": 4772728,
+    "trace_settled_tick": 421,
+    "tagline_tick": 481,
+    "hold_seconds": 0.25002053333020446,
+    "handoff_misses": 0,
+    "steps": 52,
+    "completed_handoffs": 3,
+    "handoff_PIT_clocks": [
+      69879,
+      75497,
+      81286
+    ],
+    "handoff_ms": [
+      58.565248218628845,
+      63.27366654877462,
+      68.12539914279633
+    ],
+    "handoff_budget_ms": 95.84120444324503,
+    "margin_ms": [
+      37.275956224616195,
+      32.56753789447042,
+      27.715805300448714
+    ],
+    "max_recorded_audio_entry_delay_ms": 0.6796951345226462,
+    "PSG_byte_and_service_tick_trace": "exact match, 714 records",
+    "source_logo_native_RGB_match": true,
+    "sampled_native_frames_after_white": 124,
+    "visible_pixel_count_regressions": [],
+    "outside_art_nonwhite_max": 624,
+    "full_blue_without_tagline_frames": 6,
+    "observed_hold_first_last_seconds": [
+      3.641000000294298,
+      3.7970000002533197
+    ],
+    "native_audio": "not captured; supplied audiovisual preview uses unchanged host-synthesized PSG audio",
+    "lease_released": true,
+    "owned_child_stopped": true
+  },
+  "capture_note": "Live FRAME captures occasionally contain RGB(0,0,31) scanline markers outside the program palette. Native indexed VRAM, source-ink masks and per-byte patch proof are checked independently.",
+  "audio_note": "PSG byte/service-tick stream captured natively; audible MP4 uses ideal host synthesis, not ADC or emulator audio capture."
+}

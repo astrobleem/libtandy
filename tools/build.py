@@ -8,6 +8,7 @@ import sys
 
 ROOT = Path(__file__).resolve().parents[1]
 TESTS = {
+    'smscheck': ('sms_boot_core', ['lt_chip', 'lt_sms_boot']),
     'chip': ('chip_core', ['lt_chip']),
     'audio': ('audio_core', ['lt_chip', 'lt_audio']),
     'sfx': ('sfx_core', ['lt_chip', 'lt_audio', 'lt_sfx']),
@@ -22,6 +23,8 @@ TESTS = {
 }
 # DOS-only demos of the platform services: name -> sources.
 DOS_DEMOS = {
+    'SMSBOOT': ['examples/sms_demo.c', 'src/lt_chip.c',
+                'src/lt_sms_boot.c', 'adapters/lt_dos.c', 'adapters/lt_tick_dos.c'],
     'DOEBEL': ['examples/doebel_demo.c', 'src/lt_chip.c',
                'src/lt_audio.c', 'src/lt_score.c', 'adapters/lt_dos.c',
                'adapters/lt_tick_dos.c'],
@@ -52,6 +55,8 @@ def main():
         parser.error('--gcc-launcher and --runtime-bin apply to host builds')
     if args.runtime_bin and not args.gcc_launcher:
         parser.error('--runtime-bin requires --gcc-launcher')
+    if set(TESTS) & {name.lower() for name in DOS_DEMOS}:
+        raise RuntimeError('DOS test/demo executable names collide')
     out = ROOT / 'build' / args.target
     out.mkdir(parents=True, exist_ok=True)
     env = dict(os.environ)
@@ -123,6 +128,11 @@ def main():
              ROOT / 'src/lt_audio.c', ROOT / 'src/lt_sfx.c',
              ROOT / 'src/lt_time.c', ROOT / 'adapters/lt_dos.c',
              ROOT / 'adapters/lt_time_dos.c'], 'sfx demo')
+        run([*flags, '-dSMS_LOGO', '-k4096', '-fe=TANDYLOG.EXE',
+             ROOT / 'examples/sms_demo.c', ROOT / 'src/lt_chip.c',
+             ROOT / 'src/lt_sms_boot.c', ROOT / 'src/lt_gfx.c',
+             ROOT / 'src/lt_gfx_rows.c', ROOT / 'adapters/lt_dos.c',
+             ROOT / 'adapters/lt_tick_dos.c'], 'Tandy logo')
         for exe, sources in DOS_DEMOS.items():
             run([*flags, '-k4096', '-fe=' + exe + '.EXE',
                  *[ROOT / src for src in sources]], exe.lower())

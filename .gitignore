@@ -11,3 +11,4 @@ __pycache__/
 *.rom
 *.img
 *.zip
+!examples/smsboot/SMSBOOT.ZIP

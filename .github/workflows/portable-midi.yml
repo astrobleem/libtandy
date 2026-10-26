@@ -11,3 +11,5 @@ jobs:
         run: python3 tools/build.py --target host --cc gcc
       - name: Portable MIDI checks
         run: python3 sound/tests/run.py --cc gcc
+      - name: Qualified optional DOS example package
+        run: python3 tools/check_sms_package.py

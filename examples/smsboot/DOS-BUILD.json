@@ -1,0 +1,61 @@
+{
+  "qualified_source_commit": "3184232cdcb05fd50c9d70eac29a7328d207f96f",
+  "compiler": "Open Watcom C/C++ 1.9",
+  "flags": [
+    "-bt=dos",
+    "-0",
+    "-ms",
+    "-ecc",
+    "-os",
+    "-s",
+    "-w4",
+    "-wx",
+    "-k4096"
+  ],
+  "logo_define": "SMS_LOGO",
+  "source_lf_sha256": {
+    "examples/sms_demo.c": "25fa7a9d24310915db241a87efc10d7a0d4805fd7f13a96591871f26494a5864",
+    "examples/smsboot/TRACE_RT.H": "cf2d04a0ab388fc706db3967cfd921eb17078548ef5fb0a2c312993d194e61d2",
+    "include/lt_sound.h": "73c1f17d9fa375ca737ae26d6698bb6ef1db6c734bece120603547badb783ff4",
+    "include/lt_sms_boot.h": "2b8da52b56dec3dbd05a0fc88fd95fb47d0f32d4a5ac80fa1d637136cfe3c5af",
+    "include/lt_tick_dos.h": "574a29bdbbfdf09b957dceda115ef1b22a733082ff071ceeff38f7fa2919707b",
+    "include/lt_gfx.h": "4a44604b33cce38b64f76bca4175ebbf92a42d0ff53a75fa6e60e0c01e784732",
+    "src/lt_chip.c": "acd4a219d4e9e6c473cc76fb1e52f20d1510789574286a6047d473944f32fd64",
+    "src/lt_sms_boot.c": "774772120c5d82c473f33f7e72bcedac74364e0524593d1528abebf98ec7158a",
+    "src/lt_sms_boot_data.h": "09aca2b8996a21fc84b69fc93bc3e62acd98af6f4382ee0868f9d8276dfad839",
+    "src/lt_gfx.c": "1afc06886575504ccf6608421c357cf1254939b60c1c68f45671ec740db3b389",
+    "src/lt_gfx_rows.c": "17a8437b4cc0f826a25e9105fc68164d56a89215aec2bde87b39fe2b4ef662e8",
+    "adapters/lt_dos.c": "13077d673b691a6f926b6f0a1d431d73fac5b1914fb67fef7433e0bd4837b1f7",
+    "adapters/lt_tick_dos.c": "fe0c366bc3aa30223a7b2a2d5b68ef5d3483c9fed13fa74ff0776cf4fa5dd7e0"
+  },
+  "members": {
+    "SMSBOOT.EXE": {
+      "bytes": 16440,
+      "sha256": "45a92cbf36bf9198fa3681679adf472ba6e1e549afaa884378ca2d2efe9d50aa"
+    },
+    "TANDYLOG.EXE": {
+      "bytes": 54888,
+      "sha256": "90d56031c75ed5c79abb5c7587c618becf9c6599a9f1db654d65e635bd67c20c"
+    },
+    "README.TXT": {
+      "bytes": 1236,
+      "sha256": "152b6dd9f971c25e195ed79b211a554d6c2e28ad369301c0e50a03e9966f447d"
+    },
+    "LICENSE.TXT": {
+      "bytes": 1084,
+      "sha256": "1c444f27b5b0d7397fa2e9c2812f89c2daab73c1f29fcbd91f0d8fc793e4cbd4"
+    },
+    "SHA256.TXT": {
+      "bytes": 316,
+      "sha256": "05f571501762d57378a0f84929f420f87ba04e94baea376d7fa577961ab1e15e"
+    }
+  },
+  "zip_bytes": 55918,
+  "zip_sha256": "ade350567084e4c4d11aa233ebab5522634aa549b8df8f86e3c29d6bb9ff516f",
+  "timing": {
+    "lettering_settled_tick": 421,
+    "tagline_final_attack_tick": 481,
+    "PSG_clock_PIT_divisor": 4972
+  },
+  "qualification": "Exact EXE hashes match NATIVE.json; no mandatory library runtime or consumer preparation."
+}

@@ -8,3 +8,4 @@ sound/tests/audition/*.H text eol=crlf
 # Preserve the approved binary stream and literal per-note audit bytes.
 examples/doebel/DOEBEL.VGM binary
 examples/doebel/NOTES.csv binary
+examples/smsboot/SMSBOOT.ZIP binary
