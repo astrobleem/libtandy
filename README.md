@@ -146,3 +146,12 @@ foreground retrace polling only.
 PSG VGM need no Python preparation. The recognizable tune is a reduction of
 the referenced *Evil Jingle*, with separate musical attribution in the example.
 
+
+## Optional Sega Tune and animated Tandy logo
+
+`SMSBOOT.EXE` plays the SMS BIOS startup tune extracted from Chad's OutRun SE.
+`TANDYLOG.EXE` reveals the supplied TANDY logo on white and pops in
+"clearly superior" on its final attack. Both are explicit, self-contained DOS
+examples, with no automatic startup playback or consumer preparation.
+See [usage, source and timing](examples/smsboot/README.md) and
+[validation and cost](examples/smsboot/VALIDATION.md).
