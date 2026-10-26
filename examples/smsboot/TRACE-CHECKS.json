@@ -1,0 +1,114 @@
+{
+  "type": "unpublished visual prototype; palette codec verified in software, no native run",
+  "source_logo_sha256": "1455baca00398742cdd18c20452a4941dc6f510d30f1447bfa416159827a022c",
+  "sound_changed": false,
+  "final_tick": 481,
+  "final_seconds": 2.0043312755304723,
+  "phases": 4,
+  "steps": 52,
+  "indices": {
+    "finished_blue": 0,
+    "active_stroke_groups": "1..13",
+    "tagline": 14,
+    "white_background": 15
+  },
+  "phase_checks": [
+    {
+      "phase": 0,
+      "distinct_color_histories": 14,
+      "used_indices": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15
+      ],
+      "rle_bytes": 4806
+    },
+    {
+      "phase": 1,
+      "distinct_color_histories": 15,
+      "used_indices": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15
+      ],
+      "rle_bytes": 6812
+    },
+    {
+      "phase": 2,
+      "distinct_color_histories": 15,
+      "used_indices": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15
+      ],
+      "rle_bytes": 8312
+    },
+    {
+      "phase": 3,
+      "distinct_color_histories": 16,
+      "used_indices": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15
+      ],
+      "rle_bytes": 8532
+    }
+  ],
+  "whole_sequence_distinct_histories": 54,
+  "total_rle_bytes": 28462,
+  "bitmap_handoffs": 3,
+  "max_active_framebuffer_bytes_per_pass": 19584,
+  "handoff": "commit active indices to blue0, reset now-unused active palette to white, install next mask invisibly",
+  "native_limit": "Foreground handoff cost and readiness at phase boundaries still require DOS implementation/timing checks after visual approval"
+}
