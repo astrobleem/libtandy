@@ -1,18 +1,18 @@
-# Stroke-trace logo — unpublished
+# Stroke-trace Tandy logo
 
-The previous left-to-right wipe was rejected. This candidate follows pen
-routes through T, A, N, D and Y together, with cyan heads, bright-blue
+This example follows pen routes through T, A, N, D and Y together,
+with cyan heads, bright-blue
 afterglow and settled dark-blue trails. Every pixel is clipped to the
 original supplied artwork. The final image is pixel-identical to the prior
 native framebuffer; only the path and timing of its appearance change.
 The Sega Tune extraction and reusable sound module are unchanged.
 
-The stroke aesthetic was accepted; the requested earlier finish is now
-wired into `sms_demo.c`. The runtime uses `TRACE_RT.H`; `TRACE.H` retains
+The stroke animation is wired into `sms_demo.c`. The runtime uses `TRACE_RT.H`; `TRACE.H` retains
 the full inspection masks. The lettering settles at tick 421, holds fully
 blue for 60 service ticks, and the red tagline appears at tick 481.
-The sound module and final musical cue remain unchanged. No repository
-publication is authorized or performed.
+The sound module and final musical cue remain unchanged. The public
+ready-to-run download contains the exact qualified executables; its hashes
+and source binding are recorded in `DOS-BUILD.json`.
 
 ## Palette technique and its actual limit
 

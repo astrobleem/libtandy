@@ -1,4 +1,4 @@
-/* Visual prototype: source-derived stroke masks; not a native-qualified build. */
+/* Source-derived inspection masks; the DOS runtime uses TRACE_RT.H. */
 #define TRACE_PHASES 4U
 #define TRACE_GROUPS 13U
 static const unsigned short trace_offsets[4] = {0U,4806U,11618U,19930U};

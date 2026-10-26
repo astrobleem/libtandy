@@ -1,4 +1,4 @@
-"""Visual prototype: four fixed 4bpp masks with palette-only stroke tracing.
+"""Four fixed 4bpp masks with palette-only stroke tracing.
 
 Reads the supplied logo; all visible pixels are clipped to its silhouettes.
 No Sonic artwork, ROM data, audio changes, or hardware access.
@@ -218,7 +218,7 @@ def main():
         all_histories.append(codes.flatten())
     whole_history_count=len(np.unique(np.stack(all_histories,axis=1),axis=0))
     assert whole_history_count>16
-    header='/* Visual prototype: source-derived stroke masks; not a native-qualified build. */\n'
+    header='/* Source-derived inspection masks; the DOS runtime uses TRACE_RT.H. */\n'
     offsets=[];data=[]
     for m in masks:offsets.append(len(data));data.extend(rle(m))
     header+='#define TRACE_PHASES 4U\n#define TRACE_GROUPS 13U\n'
@@ -254,7 +254,7 @@ def main():
     for i in range(13):debug[blue&(birth%13==i)]=wheel[i]
     debug[red]=(170,0,0)
     Image.fromarray(debug).resize((864,408),Image.Resampling.NEAREST).save(out/'STROKE-PHASE-DEBUG.png')
-    report={'type':'unpublished stroke-logo assets and software proof; see NATIVE.json for runtime qualification',
+    report={'type':'stroke-logo assets and software proof; see NATIVE.json for runtime qualification',
         'source_logo_sha256':sha,'sound_changed':False,'final_tick':FINAL_TICK,
         'trace_end_tick':TRACE_END_TICK,'trace_end_seconds':TRACE_END_TICK/RATE,'hold_ticks':FINAL_TICK-TRACE_END_TICK,'handoff_gap_ticks':HANDOFF_GAP_TICKS,'runtime_data':runtime[1],
         'final_seconds':FINAL_TICK/RATE,'phases':PHASES,'steps':STEPS,

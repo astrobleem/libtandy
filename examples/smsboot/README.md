@@ -2,6 +2,12 @@
 
 Two optional foreground DOS examples, with no startup hook or installation:
 
+[Download SMSBOOT.ZIP](https://github.com/astrobleem/libtandy/raw/refs/heads/main/examples/smsboot/SMSBOOT.ZIP)
+for the exact qualified EXEs, or build the source below. The small download
+contains only these optional DOS applications and their instructions/notices;
+it bundles no compiler, library runtime, game or ROM. [DOS-BUILD.json](DOS-BUILD.json)
+records the qualified source revision and hashes checked by CI.
+
 - `SMSBOOT.EXE`: plays the Sega Master System BIOS tune once.
 - `TANDYLOG.EXE`: starts white and traces the supplied lettering with cyan
   heads and blue trails. TANDY settles fully blue about a quarter-second
