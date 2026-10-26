@@ -1,4 +1,4 @@
-# Stroke-trace visual prototype — unpublished
+# Stroke-trace logo — unpublished
 
 The previous left-to-right wipe was rejected. This candidate follows pen
 routes through T, A, N, D and Y together, with cyan heads, bright-blue
@@ -7,11 +7,12 @@ original supplied artwork. The final image is pixel-identical to the prior
 native framebuffer; only the path and timing of its appearance change.
 The Sega Tune extraction and reusable sound module are unchanged.
 
-This is the requested visual-review step. `tools/trace_tandy_logo.py` builds
-the encoded masks and checks them in software. `TRACE.H` is the candidate
-asset, **not yet wired into `sms_demo.c`**. The current DOS executable still
-has the rejected wipe; do not present it as the new motion. No new native
-test cycle or repository publication has been performed for this prototype.
+The stroke aesthetic was accepted; the requested earlier finish is now
+wired into `sms_demo.c`. The runtime uses `TRACE_RT.H`; `TRACE.H` retains
+the full inspection masks. The lettering settles at tick 421, holds fully
+blue for 60 service ticks, and the red tagline appears at tick 481.
+The sound module and final musical cue remain unchanged. No repository
+publication is authorized or performed.
 
 ## Palette technique and its actual limit
 
@@ -33,19 +34,26 @@ At a handoff, settle active colors to blue, rewrite their pixel indices to
 permanent blue 0, reset the now-unused active palette entries to white, then
 install the next encoded mask while its new strokes are still white. These
 are three invisible handoffs, rather than full bitmap redraws on every
-animation frame. The static RLE data occupies **28,462 bytes**, plus eight
-bytes of phase offsets. A straightforward implementation scans the 19,584
-byte logo rectangle twice per handoff (117,504 bytes across all three).
-The eventual DOS foreground cost and phase-readiness deadlines still need
-measurement; no timing qualification is claimed by this software preview.
+animation frame. The full inspection masks use 28,462 RLE bytes. The runtime instead uses
+a 4,806-byte initial RLE mask plus 26,955 bytes of sparse patches and 128
+bytes of deadlines/descriptors: **31,889 constant bytes**. It performs only
+**8,985 framebuffer byte writes** across all three handoffs; no pass writes
+more than 1,690 bytes. Each pass is a tight, fully interruptible 8088 loop
+(`LODSW`, `LODSB`, `STOSB`, `LOOP`), with ES saved/restored and no CLI.
+The palette service skips active colors while foreground patches run.
+A missed readiness deadline is recorded as an error while audio continues.
+The 23-tick handoff windows are 95.84 ms. Native timing is recorded in
+`NATIVE.json`; the software checker separately proves every individual
+patch byte preserves RGB during the handoff.
 
 The 52 steps use cumulative ceil deadlines on the existing sound service
-clock. The last step completes the lettering, settles its highlights and
-reveals the red tagline at **tick 481 / 2.004331 seconds**, the same final
-musical attack as before. The MP4 is rendered at that service rate with the
+clock. The last trace step completes the lettering and settles its highlights at
+**tick 421 / 1.754311 seconds**. The word holds blue for a quarter-second;
+the red tagline appears at **tick 481 / 2.004331 seconds**, on the unchanged
+final musical attack. The MP4 is rendered at that service rate with the
 unchanged audio from the actual C player's PSG trace. Decoded-frame checks
-confirm white at frame 0, no red tagline at 480, and the complete logo plus
-tagline at 481. It is a host approximation, not captured native audio.
+confirm white at frame 0, settled blue lettering without a tagline at
+421 and 480, and the complete logo plus tagline at 481. It is a host approximation, not captured native audio.
 
 ## Reference inspected read-only
 

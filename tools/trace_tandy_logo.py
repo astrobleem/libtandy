@@ -10,6 +10,8 @@ from PIL import Image, ImageDraw
 
 ROOT = Path(__file__).resolve().parents[1]
 FINAL_TICK = 481
+TRACE_END_TICK = 421
+HANDOFF_GAP_TICKS = 16
 RATE = 1193182 / 4972
 GROUPS = 13
 PHASES = 4
@@ -94,12 +96,13 @@ def make_masks(blue,red,birth):
 
 def palette_for(phase,step,final=False):
     p=[COLORS[15]]*16;p[0]=COLORS[0]
+    settled = step >= STEPS-1 or step % GROUPS == GROUPS-1
     for i in range(1,14):
         born=phase*GROUPS+i-1
         age=step-born
         if age<0:p[i]=COLORS[15]
-        elif age==0 and not final:p[i]=COLORS[3]
-        elif age==1 and not final:p[i]=COLORS[9]
+        elif age==0 and not settled:p[i]=COLORS[3]
+        elif age==1 and not settled:p[i]=COLORS[9]
         else:p[i]=COLORS[1]
     p[14]=COLORS[4] if final else COLORS[15]
     return np.array(p,dtype=np.uint8)
@@ -134,7 +137,8 @@ def verify(masks,blue,red,birth):
                 elif birth[y,x]<phase*GROUPS:c=COLORS[1]
                 else:
                     age=s-int(birth[y,x])
-                    c=COLORS[3] if age==0 and not final else COLORS[9] if age==1 and not final else COLORS[1]
+                    settled = s >= STEPS-1 or s % GROUPS == GROUPS-1
+                    c=COLORS[3] if age==0 and not settled else COLORS[9] if age==1 and not settled else COLORS[1]
                 history.append(c)
                 actual=tuple(palette_for(phase,s,final)[int(m[y,x])])
                 assert actual==c
@@ -160,6 +164,41 @@ def verify(masks,blue,red,birth):
         assert np.array_equal(before,p[committed])
         assert np.array_equal(before,p[new])
     return report
+
+def deadline(step):
+    available = TRACE_END_TICK - (PHASES-1)*HANDOFF_GAP_TICKS
+    return ((step+1)*available+STEPS-1)//STEPS + (step//GROUPS)*HANDOFF_GAP_TICKS
+
+def runtime_header(masks):
+    def packed(m):
+        a=m.flatten();return ((a[::2]<<4)|a[1::2]).tolist()
+    def emit_array(name,data,typ='unsigned char'):
+        h='static const '+typ+' '+name+'[] = {\n'
+        h+=''.join('    '+','.join(str(int(v))+'U' for v in data[i:i+16])+',\n' for i in range(0,len(data),16))+'};\n'
+        return h
+    initial=rle(masks[0]);patch=[];offsets=[];counts=[]
+    for phase in range(3):
+        old=masks[phase].copy();committed=old.copy()
+        committed[(old>=1)&(old<=13)]=0
+        for a,b in [(old,committed),(committed,masks[phase+1])]:
+            offsets.append(len(patch));count=0
+            for i,(before,after) in enumerate(zip(packed(a),packed(b))):
+                if before!=after:
+                    y,x=divmod(i,144)
+                    y+=32
+                    addr=(y&3)*8192+(y>>2)*160+8+x
+                    patch.extend((addr&255,addr>>8,after));count+=1
+            counts.append(count)
+    h='/* Source-derived palette stroke assets; no Sonic ROM bytes. */\n'
+    h+='#define TRACE_END_TICK 421U\n#define TRACE_FINAL_TICK 481U\n'
+    h+='#define TRACE_PATCH_PASSES 6U\n'
+    h+=emit_array('trace_deadlines',[deadline(s) for s in range(STEPS)],'unsigned short')
+    h+=emit_array('trace_initial',initial)
+    h+=emit_array('trace_patch_offsets',offsets,'unsigned short')
+    h+=emit_array('trace_patch_counts',counts,'unsigned short')
+    h+=emit_array('trace_patches',patch)
+    budgets=[deadline((p+1)*13)-deadline(p*13+12) for p in range(3)]
+    return h,{'initial_rle_bytes':len(initial),'patch_data_bytes':len(patch),'patch_counts':counts,'deadline_table_bytes':104,'descriptor_bytes':24,'total_constant_bytes':len(initial)+len(patch)+128,'handoff_available_ticks':budgets}
 
 def main():
     ap=argparse.ArgumentParser(description=__doc__)
@@ -187,37 +226,43 @@ def main():
     header+='static const unsigned char trace_runs[] = {\n'
     header+=''.join('    '+','.join('0x%02XU'%v for v in data[i:i+16])+',\n' for i in range(0,len(data),16))+'};\n'
     (out/'TRACE.H').write_text(header,encoding='ascii')
+    runtime = runtime_header(masks)
+    (out/'TRACE_RT.H').write_text(runtime[0],encoding='ascii')
     images=[]
     for s in range(-1,STEPS):
-        im=render(masks,s,s==STEPS-1)
+        im=render(masks,s,False)
         b=io.BytesIO();im.save(b,format='PNG');images.append('data:image/png;base64,'+base64.b64encode(b.getvalue()).decode())
-    deadlines=[0]+[math.ceil((s+1)*FINAL_TICK/STEPS)/RATE for s in range(STEPS)]
-    frames=[render(masks,s,s==STEPS-1) for s in range(-1,STEPS)]
+    im=render(masks,STEPS-1,True)
+    b=io.BytesIO();im.save(b,format='PNG');images.append('data:image/png;base64,'+base64.b64encode(b.getvalue()).decode())
+    deadlines=[0]+[deadline(s)/RATE for s in range(STEPS)]+[FINAL_TICK/RATE]
+    frames=[render(masks,s,False) for s in range(-1,STEPS)]+[im]
     duration=805/RATE+.15
-    delays=[round((deadlines[i+1]-deadlines[i])*1000) for i in range(STEPS)]+[round((duration-deadlines[-1])*1000)]
+    delays=[round((deadlines[i+1]-deadlines[i])*1000) for i in range(STEPS+1)]+[round((duration-deadlines[-1])*1000)]
     frames[0].save(out/'TANDY-STROKE.gif',save_all=True,append_images=frames[1:],duration=delays,loop=0,optimize=False)
     frames[-1].save(out/'TANDY-STROKE-FINAL.png')
     # A contact sheet makes route shape, not only the final logo, reviewable.
-    picks=[-1,3,8,15,22,30,39,46,51]
+    picks=[-1,8,20,30,39,46,51,51,52]
     sheet=Image.new('RGB',(960,780),(232,232,232));d=ImageDraw.Draw(sheet)
     for j,s in enumerate(picks):
         x=(j%3)*320;y=(j//3)*260
-        im=render(masks,s,s==51).resize((320,240),Image.Resampling.NEAREST)
-        sheet.paste(im,(x,y));d.text((x+6,y+242),'white start' if s<0 else 'trace step %d/52'%(s+1),fill=(20,20,20))
+        im=render(masks,min(s,51),j==8).resize((320,240),Image.Resampling.NEAREST)
+        sheet.paste(im,(x,y));label='white start' if s<0 else 'TANDY settled: 1.754 s' if j==6 else 'blue hold before hit' if j==7 else 'tagline hit: 2.004 s' if j==8 else 'trace step %d/52'%(s+1)
+        d.text((x+6,y+242),label,fill=(20,20,20))
     sheet.save(out/'TANDY-STROKE-CONTACT.png')
     debug=np.zeros((136,288,3),dtype=np.uint8);debug[:]=255
     wheel=[(255,0,0),(255,128,0),(200,200,0),(0,180,0),(0,180,150),(0,170,255),(0,80,255),(80,0,255),(160,0,255),(220,0,160),(180,80,80),(80,100,80),(60,60,60)]
     for i in range(13):debug[blue&(birth%13==i)]=wheel[i]
     debug[red]=(170,0,0)
     Image.fromarray(debug).resize((864,408),Image.Resampling.NEAREST).save(out/'STROKE-PHASE-DEBUG.png')
-    report={'type':'unpublished visual prototype; palette codec verified in software, no native run',
+    report={'type':'unpublished stroke-logo assets and software proof; see NATIVE.json for runtime qualification',
         'source_logo_sha256':sha,'sound_changed':False,'final_tick':FINAL_TICK,
+        'trace_end_tick':TRACE_END_TICK,'trace_end_seconds':TRACE_END_TICK/RATE,'hold_ticks':FINAL_TICK-TRACE_END_TICK,'handoff_gap_ticks':HANDOFF_GAP_TICKS,'runtime_data':runtime[1],
         'final_seconds':FINAL_TICK/RATE,'phases':PHASES,'steps':STEPS,
         'indices':{'finished_blue':0,'active_stroke_groups':'1..13','tagline':14,'white_background':15},
         'phase_checks':checks,'whole_sequence_distinct_histories':whole_history_count,'total_rle_bytes':len(data),
-        'bitmap_handoffs':3,'max_active_framebuffer_bytes_per_pass':19584,
+        'bitmap_handoffs':3,'max_patch_writes_per_pass':max(runtime[1]['patch_counts']),'total_patch_writes':sum(runtime[1]['patch_counts']),
         'handoff':'commit active indices to blue0, reset now-unused active palette to white, install next mask invisibly',
-        'native_limit':'Foreground handoff cost and readiness at phase boundaries still require DOS implementation/timing checks after visual approval'}
+        'native_limit':'Software proof covers pixel/index/patch semantics. Runtime measurements belong in NATIVE.json.'}
     (out/'TRACE-CHECKS.json').write_text(json.dumps(report,indent=2))
     (out/'PREVIEW-FRAMES.json').write_text(json.dumps({'images':images,'times':deadlines}))
     print(json.dumps(report,indent=2))

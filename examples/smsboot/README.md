@@ -3,9 +3,10 @@
 Two optional foreground DOS examples, with no startup hook or installation:
 
 - `SMSBOOT.EXE`: plays the Sega Master System BIOS tune once.
-- `TANDYLOG.EXE`: starts white, reveals the supplied TANDY lettering in 13
-  blue palette bands, then completes the lettering and pops in the red
-  "clearly superior" tagline on the final attack. The final logo stays until
+- `TANDYLOG.EXE`: starts white and traces the supplied lettering with cyan
+  heads and blue trails. TANDY settles fully blue about a quarter-second
+  before the hit; the red "clearly superior" tagline pops in on the final
+  attack. The final logo stays until
   a key. `/auto` returns when the sound ends. Escape cancels either example.
 
 Build with the normal developer command from the repository root:
@@ -64,24 +65,33 @@ The retained PSG frame sets the three tone dividers, restarts the volume
 attack (`97 B7 D7`) and sets noise (`F0`). This is the final new chord/attack;
 the subsequent divider changes are its authored modulation and decay.
 `LTSB_FINAL_TICK` is **481**, at **2.004331 seconds** on the DOS clock.
-The final blue band and tagline palette change in that very callback,
-immediately before the final attack's PSG writes. There is no independent
-animation sleep clock or framebuffer redraw on that beat. Completion is
-tick **805**, at **3.354442 seconds**.
+TANDY finishes and settles fully blue at **tick 421 / 1.754311 seconds**.
+It holds for 60 ticks (about **0.250 seconds**). Only the tagline palette
+changes at tick 481, immediately before the final attack's PSG writes.
+There is no independent animation sleep clock or framebuffer redraw on that
+beat. Sound completion is tick **805**, at **3.354442 seconds**.
 
 `logo.png` is Chad's supplied image, Library ID
 `libfile_932ad524a9f881919e212eefa0964f77`, SHA256
 `1455baca00398742cdd18c20452a4941dc6f510d30f1447bfa416159827a022c`.
 The lettering and tagline are reduced from those actual pixels, not recreated
-with fonts. `logo.h` contains the ready-to-use RLE palette labels. Background
-index 15 stays white; indices 1..13 reveal blue; index 14 reveals red. The
+with fonts. `TRACE_RT.H` contains the ready-to-use initial mask and sparse
+byte patches. Background index 15 stays white; index 0 holds completed blue;
+indices 1..13 animate strokes; index 14 reveals the tagline. The
 mode-9 conversion uses 288x136 pixels centered at (16,32), accounting for
-the 5:6 pixel width/height ratio on a 4:3 display. Palette bands avoid repeated
-8088 framebuffer drawing, with 13 visible steps over about two seconds.
+the 5:6 pixel width/height ratio on a 4:3 display. Four masks provide 52
+stroke positions, with three invisible foreground handoffs. A short 8088
+patch loop keeps interrupts enabled; no video transfer happens in the audio
+callback. Each handoff has a 23-tick (95.84 ms) window. See the
+[stroke implementation](STROKE-PREVIEW.md) and [native measurements](NATIVE.json).
 The available 16-color palette reduces the original colors and edge detail.
 
-`tools/convert_tandy_logo.py` is an optional developer regeneration tool
-(Pillow); the DOS executable does not consume it or the PNG.
+`tools/trace_tandy_logo.py --out <directory>` is an optional developer
+regeneration/preview tool (Pillow/NumPy). `tools/check_tandy_trace.py` verifies
+the actual sparse runtime encoding. Neither is needed on the DOS machine.
+For diagnostics only, run `TANDYLOG /auto /stats`: it reports handoff times
+and cue ticks, and saves `SMSPSG.BIN` after stopping/restoring the timer.
+Normal playback does not create diagnostic files.
 
 ## Source
 

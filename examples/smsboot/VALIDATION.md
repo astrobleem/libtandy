@@ -1,51 +1,78 @@
 # Validation and cost
 
-Built on libtandy main `a5dd8b815742991e7629b8cde269ee8de6ab5f9b`.
-No existing sound/graphics driver or MIDI-bank behavior is changed.
+The reusable sound module/API and extracted PSG data are unchanged. This
+revision wires the accepted stroke-trace artwork into the optional Tandy
+mode-9 example, with the requested quarter-second hold before the final hit.
+It adds no CGA fallback and changes no graphics/sound driver or MIDI bank.
 
-- Managed GCC C89 host suite passes, including all previous tests and a new
-  reference check of every one of the 710 PSG bytes at its scheduled tick.
-  It also tests silent initialization, atomic ownership conflict, bounded
-  work, restart, early cancellation, idle stop, final mute/release and cache
-  invalidation before subsequent low-level use.
-- Open Watcom `-0 -ms -ecc -os -s -w4 -wx` DOS build passes, including
-  `SMSBOOT.EXE`, `TANDYLOG.EXE`, and `smscheck.EXE`. Test/demo output names
-  are checked for collisions on the case-insensitive DOS filesystem.
-- Original Library archive, project VGM and both v0.13 assembly tables
-  agree on all 710 bytes. The optional extraction checker passes.
-- A short emulated Tandy HX session passed sound completion, progressive
-  logo/hold, Escape, mute/release and restoration of IRQ0 and BIOS clock.
-  All post-return samples advanced six BIOS ticks in about 0.31 seconds.
-  The real shared emulator lease was acquired and released, and only the
-  owned child was controlled. Early/middle/final native frames were captured.
-  A final capture of the exact delivered palette-4 executable also passed
-  after waiting for the shared lease. All 64,000 active framebuffer pixels
-  match the source-derived logo asset, and the emulator frame confirms red
-  RGB(170,0,0). Its timer restoration/cleanup passed too. The captured VRAM
-  is available as a 4:3 image, alongside the raw emulator frame.
-  No physical-hardware or captured-audio qualification.
+## Checks
 
-| Added component | Cost |
+- Managed GCC C89 host suite passes, including the original unit tests and
+  every one of the 710 PSG bytes at its expected source-derived service tick.
+- Open Watcom `-0 -ms -ecc -os -s -w4 -wx` DOS build passes. Both EXEs are
+  self-contained; no consumer Python, PNG, VGM or conversion is required.
+- `tools/check_tandy_trace.py` passes the actual runtime-header round trip,
+  all six sparse patch passes and every individual byte's RGB invariance.
+  The four masks need 14/15/15/16 distinct color histories; all 54 whole-
+  sequence histories cannot fit in one fixed 4bpp mask.
+- A native Tandy HX run configured at **4,772,728 Hz** passed the exact
+  delivered executable. It completed all 52 trace steps and three handoffs
+  with **zero missed animation deadlines**. TANDY settled at tick **421**;
+  the tagline appeared at **481**, a **0.250021-second** hold.
+- Handoffs measured **58.565, 63.274 and 68.125 ms**, against **95.841 ms**
+  available each: at least **27.716 ms** spare. The initial C transfer loop
+  exceeded this budget; the delivered loop uses a short, fully interruptible
+  8088 `LODSW`/`LODSB`/`STOSB` routine with no CLI. Video transfers and
+  DOS work stay out of the audio callback.
+- Native diagnostics captured **714 exact byte/service-tick records**:
+  all 710 source writes plus the four cleanup mutes. No trace overflow;
+  two nested timer events were queued/drained by the existing adapter.
+  Maximum recorded audio callback-entry offset was **0.680 ms**.
+- Indexed native VRAM matches all **64,000 source-derived RGB pixels**.
+  The 124 sampled native frames after white showed no regression in visible
+  source-ink pixels; six frames sampled the full-blue/no-tagline hold.
+  The live FRAME API occasionally adds a thin RGB(0,0,31) scanline marker,
+  outside the example's palette. The raw recording preserves those capture
+  artifacts; the VRAM image and independent patch checks do not contain them.
+- Normal completion/hold/return restored IRQ0 and the BIOS clock (six BIOS
+  ticks over about 0.31 s). The owned emulator stopped and the real shared
+  lease was released. Core cancellation/restart/mute remain host-tested;
+  earlier native cancellation checks are historical, before this logo change.
+
+The receipt is [NATIVE.json](NATIVE.json). Physical hardware, analog output
+and native audio recording are not qualified.
+
+## Cost
+
+| Component | Cost |
 | --- | ---: |
-| Sound stream: 119 deadline groups / 710 PSG bytes | 1,067 constant bytes |
+| Sound stream: 119 groups / 710 PSG bytes | 1,067 constant bytes |
 | Optional effect module, Watcom 8086 small-model text | 449 bytes |
-| Caller-owned effect player, DOS small model | 8 bytes |
-| Mutable static state added by effect module | 0 bytes |
-| Source-derived logo RLE | 7,828 constant bytes |
-| Sound-only DOS executable | 8,956 bytes |
-| Logo DOS executable | 22,710 bytes |
+| Caller-owned sound-effect player, DOS small model | 8 bytes |
+| Mutable static state added by sound-effect module | 0 bytes |
+| Initial logo RLE | 4,806 constant bytes |
+| Sparse logo patches | 26,955 constant bytes |
+| Logo deadlines/descriptors | 128 constant bytes |
+| Total runtime logo tables | 31,889 constant bytes |
+| `/stats` trace buffer, statically reserved in examples | 2,142 bytes |
+| Sound-only EXE | 16,440 bytes |
+| Logo EXE | 54,888 bytes |
+| Logo minimum MZ startup allocation, including PSP | 64,840 bytes |
 
-The effect also uses the caller's existing `lt_chip`. The DOS example uses
-the existing timer adapter's 3 KiB private stack and requests a 4 KiB program
-stack. Logo conversion expands into the existing video aperture before
-playback, with no heap or full-frame RAM buffer. There is no cost to an
-application that does not compile/call this optional module.
+The MZ minimum excludes the DOS environment and optional CRT file buffers.
+The example also uses the existing timer's 3 KiB private stack and requests
+a 4 KiB program stack (included in that MZ minimum). Drawing uses the video
+aperture directly, with no heap/full-frame RAM buffer during playback.
+The foreground handoffs write **8,985 bytes total**, at most **1,690** in
+one patch pass. Diagnostic file I/O happens only after timer/audio cleanup.
+Applications compiling only the sound module do not pay for logo/diagnostics.
 
-The review package includes a WAV synthesized from the actual C player's
-PSG output, a synchronized HTML preview, MP4, GIF, and PNG. The MP4 was decoded to
-verify white at frame 0, no tagline at frame 480, and the complete logo
-plus tagline at frame 481 (the final-note service tick). These are host
-approximations with ideal square waves and Tandy-style 15-bit noise, fixed
-0.18 gain per voice, no normalization, analog filtering or speaker model.
-The HTML follows audio playback time. GIF timing rounds to 10 ms and has
-no audio. Preview output is not human listening acceptance or native audio.
+## Preview labels
+
+The audible MP4 is an ideal host PSG approximation from the unchanged C
+player trace: fixed 0.18 gain per voice, no normalization, analog filtering
+or speaker model. Its decoded frames confirm white at frame 0, complete
+blue lettering at 421, the same blue hold without red at 480, and the red
+tagline at 481. A separate silent video contains real native captures with
+4:3 correction; frame-RPC sampling is variable-rate and is not an audio or
+precise elapsed-time recording. Guest tick/transfer receipts establish timing.
