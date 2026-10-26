@@ -18,10 +18,12 @@ No existing sound/graphics driver or MIDI-bank behavior is changed.
   All post-return samples advanced six BIOS ticks in about 0.31 seconds.
   The real shared emulator lease was acquired and released, and only the
   owned child was controlled. Early/middle/final native frames were captured.
-  That run used light-red palette 12; the final example changes only the
-  tagline to palette 4 for a closer saturated red. Its DOS rebuild passes;
-  the final-color native retry could not acquire the busy shared lease and
-  launched no emulator. No physical-hardware or captured-audio qualification.
+  A final capture of the exact delivered palette-4 executable also passed
+  after waiting for the shared lease. All 64,000 active framebuffer pixels
+  match the source-derived logo asset, and the emulator frame confirms red
+  RGB(170,0,0). Its timer restoration/cleanup passed too. The captured VRAM
+  is available as a 4:3 image, alongside the raw emulator frame.
+  No physical-hardware or captured-audio qualification.
 
 | Added component | Cost |
 | --- | ---: |
@@ -40,7 +42,9 @@ playback, with no heap or full-frame RAM buffer. There is no cost to an
 application that does not compile/call this optional module.
 
 The review package includes a WAV synthesized from the actual C player's
-PSG output, a synchronized HTML preview, GIF, and PNG. These are host
+PSG output, a synchronized HTML preview, MP4, GIF, and PNG. The MP4 was decoded to
+verify white at frame 0, no tagline at frame 480, and the complete logo
+plus tagline at frame 481 (the final-note service tick). These are host
 approximations with ideal square waves and Tandy-style 15-bit noise, fixed
 0.18 gain per voice, no normalization, analog filtering or speaker model.
 The HTML follows audio playback time. GIF timing rounds to 10 ms and has
