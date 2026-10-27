@@ -1,0 +1,82 @@
+{
+  "qualified_source_commit": "d97d173",
+  "compiler": "Open Watcom 1.9",
+  "flags": [
+    "-bt=dos",
+    "-0",
+    "-ms",
+    "-ecc",
+    "-os",
+    "-s",
+    "-w4",
+    "-wx",
+    "-k4096"
+  ],
+  "source_lf_sha256": {
+    "src/lt_engine.c": "d9bd67954865ed85513652d4c97d1b999d39b8ab59076cf217c037447c817586",
+    "src/lt_engine_view.c": "84df1b9e00adab45afaa4893e78a22d315bb91d63f2e0574231e40a326d42ba7",
+    "adapters/lt_engine_dos.c": "7e6900fd0d5df7211b124eac75151472afee444ad8448cde51fd8c141d130729",
+    "examples/engine_demo.c": "8439e7765708282d439a2199cee5422b89196e78d2b41d3186421f1ab58c457b",
+    "examples/engine_text_demo.c": "b2689df94cc66238aa3a256b8209fff533c9e0de5ef0a5547c03437a86d41a7a",
+    "include/lt_engine.h": "1043bb78702f6a9488275fb1afd424984405450bdf24f5280feac2e7b71baeed",
+    "include/lt_engine_view.h": "cb9824e2140a462e23ecbeabe1d4af7bbb1b4528bb0b4cf89502519a81feb5c2",
+    "include/lt_engine_dos.h": "83bd6172bf2d28faf1d6fbd02c8928cd716f6dd92a709261a7a96ddf8b363994",
+    "tests/engine_core.c": "0365570e0278334058dce81319dc0b87ebe2f751bebb218c8d613160145de1a1",
+    "tests/engine_view.c": "347279286915072ae1329e3ae0abd5629ae45d338efd1f96138c57f62ebac2f5",
+    "tests/engine_dos.c": "53a50b7d26cc1dfcd3de5e7bc0eac61db3ddec79958ef5b249e2229ff0a0be7e",
+    "src/lt_time.c": "d26bea522d482b0134cdbc6fb3b642a5e34f32ee5a3b8fdebb8e29f152ab841f",
+    "adapters/lt_time_dos.c": "beb10baca039286fe550b428c984b17201c30ab506459ef1c153e7c6adc99817",
+    "include/lt_time.h": "70a750125d08b6096896ad7a98a43cd4e340d17cebfae07b615b7b949ee39d96",
+    "include/lt_time_dos.h": "7102506c96865900947cfbc6fdcf47b8b5c0af4b8b1c4eae8d234f8aa69a252a",
+    "include/lt_surface.h": "5ce7a074d1bc734fd460ff70590e4a8234f84df3f95e7beceed226854b4392a9"
+  },
+  "zip_sha256": "1ab2c7f0441464cca06f3d28cf07947ca075900bda6fa439da71e1015aa6451d",
+  "members": {
+    "DOCS/ENGINE.MD": {
+      "bytes": 10486,
+      "sha256": "bd2ce10965513e3bc76f9c3e5f80f27729c045ab64fe74094c5afb49d78c88e2"
+    },
+    "DOCS/VALIDATE.MD": {
+      "bytes": 6358,
+      "sha256": "de158a2bbdd628bd4b3bff17470703c6601a6a4cff83cb5b8fa711a07e5b1324"
+    },
+    "ENGDEMO.EXE": {
+      "bytes": 15912,
+      "sha256": "5f3f80eaa62734c6949d61c798a917c6ae790b2ff544d388320a108f103660de"
+    },
+    "ENGDOS.EXE": {
+      "bytes": 11498,
+      "sha256": "dcfbfdc2c9f0f03c3209202165647846af6606795017c1277eb5dfcefac8d25b"
+    },
+    "ENGINE.EXE": {
+      "bytes": 13578,
+      "sha256": "e88b1480bcfa405499b20138e0fd59400a8714ea7a03e4b026e654a143efb703"
+    },
+    "ENGVIEW.EXE": {
+      "bytes": 42966,
+      "sha256": "48e67d3b46992d6e0c7ec9216094a6dcd3bd1fef6922cb70f777b6d2d75cd622"
+    },
+    "LICENSE.TXT": {
+      "bytes": 1063,
+      "sha256": "1b7073ca79c0f526b7017032b475e99b0443ad0bac029169a2d646a12e533985"
+    },
+    "README.TXT": {
+      "bytes": 746,
+      "sha256": "a73df1ae350591b5c26381934848e0efa0c83e8f785f75299581050345dd3a7e"
+    },
+    "RUNCHECK.BAT": {
+      "bytes": 206,
+      "sha256": "40cf27bf947892d1e4bfea72d8a397cefa357fcf05caebf45c4ff8ddcdab3205"
+    },
+    "TXTDEMO.EXE": {
+      "bytes": 15910,
+      "sha256": "2c5be6da695efe692bbcebf2bce43082572a8971fc8c27915aec57b45c763c37"
+    }
+  },
+  "document_members": {
+    "DOCS/ENGINE.MD": "docs/ENGINE.md",
+    "DOCS/VALIDATE.MD": "docs/ENGINE-VALIDATION.md",
+    "LICENSE.TXT": "LICENSE"
+  },
+  "native_lf_sha256": "59f43dc5b506abda53b58bb4eaeb50fee860b8ae85c37e3e014bba0c09c3f9bd"
+}

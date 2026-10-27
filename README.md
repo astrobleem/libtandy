@@ -12,6 +12,8 @@ Windows 3.0 USER/GDI project named libwintandy.
 
 | Modules | Contract |
 | --- | --- |
+| `lt_engine.h` (optional) | Caller-owned objects, Awake/Start/FixedUpdate/Update/LateUpdate, bounded foreground catch-up, AABB/tile collision and camera. Rendering-independent simulation; [engine guide and DOS demos](docs/ENGINE.md). |
+| `lt_engine_view.h`, `lt_engine_dos.h` (optional) | Explicit native Tandy 160x200/320x200 packed layouts and 40/80-column text; optional mode/page/cursor setup/restore. No timer or sound ownership. |
 | `lt_sound.h`, `lt_chip.c`, DOS sink | Caller owns hardware exclusion and scheduling. Owner tokens track channels; they do not arbitrate against other applications. Stop mutes before unclaim. |
 | `lt_gfx.h`, `lt_gfx.c` | Caller supplies a valid 32 KiB packed four-bank mode-9 aperture. No mode switch, allocation or resident service in the raster core. |
 | `lt_dos_app.h` (optional) | Foreground convenience setup for mode 9, the direct video aperture, BIOS input state and the default Tandy sound port. Saves/restores video page and cursor; no allocation or resident service. |
