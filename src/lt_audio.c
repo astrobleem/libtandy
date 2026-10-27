@@ -5,6 +5,14 @@
 #define LTA_TONE_BITS 7U
 #define LTA_U32_HALF 0x80000000UL
 
+static lt_u8 output_level(const lta_handle *h, unsigned channel,
+                           lt_u8 level, int effect)
+{
+    unsigned sum = (unsigned)level + (effect ? h->sfx_attenuation :
+                                             h->music_attenuation[channel]);
+    return (lt_u8)((h->muted || (effect ? h->effect_paused : h->music_paused) || sum > 15U) ? 15U : sum);
+}
+
 static int lta_mask_valid(lt_u8 mask)
 {
     return mask != 0U && (mask & 240U) == 0U;
@@ -25,7 +33,7 @@ static int lta_owns_mask(const lta_handle *h, lt_u8 mask)
 static lta_status lta_preflight_active(lta_handle *h)
 {
     if (!h || !h->chip || !h->token || h->active > 1U ||
-        h->muted > 1U || (h->mask & 240U) != 0U ||
+        h->muted > 1U || h->music_paused > 1U || h->effect_paused > 1U || (h->mask & 240U) != 0U ||
         (h->playing & (lt_u8)~h->mask) != 0U ||
         (h->deadline_mask & (lt_u8)~h->mask) != 0U ||
         h->effect_active > 1U || (h->effect_mask & 240U) != 0U ||
@@ -141,9 +149,12 @@ static lta_status lta_acquire(lta_handle *h, const lta_request *r)
     next.effect_active = 0U;
     next.effect_playing = 0U;
     next.effect_noise_mode = 0U;
+    next.sfx_attenuation = 0U;
+    next.music_paused = next.effect_paused = 0U;
     for (i = 0; i < 4U; ++i) {
         next.kind[i] = LTA_KIND_NONE;
         next.level[i] = 15U;
+        next.music_attenuation[i] = 0U;
         next.effect_kind[i] = LTA_KIND_NONE;
         next.effect_level[i] = 15U;
         next.deadline[i] = 0UL;
@@ -161,6 +172,7 @@ static lta_status lta_release(lta_handle *h)
     /* lt_stop preflights its complete (possibly coupled) expansion. */
     if (!lt_stop(h->chip, h->token, mask)) return LTA_OWNER;
     h->active = 0U;
+    h->music_paused = 0U;
     h->mask = 0U;
     h->playing = 0U;
     h->muted = 0U;
@@ -171,6 +183,7 @@ static lta_status lta_release(lta_handle *h)
     h->effect_active = 0U;
     h->effect_playing = 0U;
     h->effect_noise_mode = 0U;
+    h->effect_paused = 0U;
     for (i = 0; i < 4U; ++i) {
         h->kind[i] = LTA_KIND_NONE;
         h->level[i] = 15U;
@@ -190,7 +203,7 @@ static lta_status lta_tone(lta_handle *h, const lta_request *r, int start)
     if (!(h->mask & bit)) return LTA_OWNER;
     if (!start && (!(h->playing & bit) || h->kind[r->channel] != LTA_KIND_TONE))
         return LTA_STATE;
-    attenuation = h->muted ? 15U : r->level;
+    attenuation = output_level(h, r->channel, r->level, 0);
     /* Store music updates in h; the effect owns hardware until it ends. */
     if (!(h->effect_active && (h->effect_mask & bit))) {
         if (!lt_tone(h->chip, h->token, r->channel, r->period, start))
@@ -213,7 +226,7 @@ static lta_status lta_noise(lta_handle *h, const lta_request *r, int start)
     if (!(h->mask & 8U)) return LTA_OWNER;
     if (!start && (!(h->playing & 8U) || h->kind[3] != LTA_KIND_NOISE))
         return LTA_STATE;
-    attenuation = h->muted ? 15U : r->level;
+    attenuation = output_level(h, 3U, r->level, 0);
     if ((r->mode & 3U) == 3U) {
         if (!(h->mask & 4U)) return LTA_STATE;
         if (h->effect_active && (h->effect_mask & 4U)) {
@@ -246,7 +259,7 @@ static lta_status lta_level(lta_handle *h, const lta_request *r)
     if (r->channel >= 4U || r->level > 15U) return LTA_INVALID;
     bit = (lt_u8)(1U << r->channel);
     if (!(h->mask & bit)) return LTA_OWNER;
-    attenuation = h->muted ? 15U : r->level;
+    attenuation = output_level(h, r->channel, r->level, 0);
     if (!(h->effect_active && (h->effect_mask & bit))) {
         if (!lt_attenuate(h->chip, h->token, r->channel,
                           attenuation, 1)) return LTA_OWNER;
@@ -276,27 +289,30 @@ static lta_status lta_noise_mode(lta_handle *h, const lta_request *r)
     return LTA_OK;
 }
 
-static lta_status lta_mute(lta_handle *h, lt_u8 enabled)
+static lta_status refresh_volumes(lta_handle *h)
 {
     unsigned i;
+    for (i = 0; i < 4U; ++i) {
+        lt_u8 bit = (lt_u8)(1U << i), attenuation = 15U;
+        if (!(h->mask & bit)) continue;
+        if (h->effect_mask & bit) {
+            if (h->effect_playing & bit)
+                attenuation = output_level(h, i, h->effect_level[i], 1);
+        } else if (h->playing & bit) {
+            attenuation = output_level(h, i, h->level[i], 0);
+        }
+        if (!lt_attenuate(h->chip, h->token, (lt_u8)i, attenuation, 1))
+            return LTA_OWNER;
+    }
+    return LTA_OK;
+}
+
+static lta_status lta_mute(lta_handle *h, lt_u8 enabled)
+{
     if (enabled > 1U) return LTA_INVALID;
     if (h->muted == enabled) return LTA_OK;
-    for (i = 0; i < 4U; ++i) {
-        lt_u8 bit = (lt_u8)(1U << i);
-        if (h->mask & bit) {
-            lt_u8 attenuation = 15U;
-            if (!enabled && h->effect_active &&
-                (h->effect_mask & bit) && (h->effect_playing & bit))
-                attenuation = h->effect_level[i];
-            else if (!enabled && !(h->effect_active &&
-                      (h->effect_mask & bit)) && (h->playing & bit))
-                attenuation = h->level[i];
-            if (!lt_attenuate(h->chip, h->token, (lt_u8)i,
-                              attenuation, 1)) return LTA_OWNER;
-        }
-    }
     h->muted = enabled;
-    return LTA_OK;
+    return refresh_volumes(h);
 }
 
 /* Reserve channels for one short foreground effect. Tone 3 and noise share
@@ -326,6 +342,7 @@ lta_status lta_overlay_begin(lta_handle *h, lt_u8 mask,
     h->effect_active = 1U;
     h->effect_playing = 0U;
     h->effect_noise_mode = 0U;
+    h->effect_paused = 0U;
     for (i = 0; i < 4U; ++i) {
         h->effect_kind[i] = LTA_KIND_NONE;
         h->effect_level[i] = 15U;
@@ -353,7 +370,7 @@ lta_status lta_overlay_tone(lta_handle *h, lt_u8 channel,
     if (!lt_tone(h->chip, h->token, channel, period, start))
         return LTA_OWNER;
     if (!lt_attenuate(h->chip, h->token, channel,
-                      h->muted ? 15U : level,
+                      output_level(h, channel, level, 1),
                       start || h->effect_level[channel] != level))
         return LTA_OWNER;
     h->effect_kind[channel] = LTA_KIND_TONE;
@@ -380,7 +397,7 @@ lta_status lta_overlay_noise(lta_handle *h, lt_u8 mode, lt_u8 level)
                     h->effect_kind[3] != LTA_KIND_NOISE);
     if (!lt_noise(h->chip, h->token, mode, start)) return LTA_OWNER;
     if (!lt_attenuate(h->chip, h->token, 3U,
-                      h->muted ? 15U : level,
+                      output_level(h, 3U, level, 1),
                       start || h->effect_level[3] != level))
         return LTA_OWNER;
     h->effect_kind[3] = LTA_KIND_NOISE;
@@ -439,6 +456,7 @@ lta_status lta_overlay_end(lta_handle *h)
     h->effect_mask = 0U;
     h->effect_playing = 0U;
     h->effect_noise_mode = 0U;
+    h->effect_paused = 0U;
     for (i = 0; i < 4U; ++i) {
         h->effect_kind[i] = LTA_KIND_NONE;
         h->effect_level[i] = 15U;
@@ -451,7 +469,7 @@ lta_status lta_overlay_end(lta_handle *h)
         if ((h->playing & bit) && h->kind[i] == LTA_KIND_TONE) {
             (void)lt_tone(h->chip, h->token, (lt_u8)i, h->period[i], 1);
             (void)lt_attenuate(h->chip, h->token, (lt_u8)i,
-                               h->muted ? 15U : h->level[i], 1);
+                               output_level(h, i, h->level[i], 0), 1);
         } else {
             h->chip->tone_valid &= (lt_u8)~bit;
         }
@@ -460,7 +478,7 @@ lta_status lta_overlay_end(lta_handle *h)
         if ((h->playing & 8U) && h->kind[3] == LTA_KIND_NOISE) {
             (void)lt_noise(h->chip, h->token, h->noise_mode, 1);
             (void)lt_attenuate(h->chip, h->token, 3U,
-                               h->muted ? 15U : h->level[3], 1);
+                               output_level(h, 3U, h->level[3], 0), 1);
         } else {
             h->chip->noise_valid = 0U;
         }
@@ -524,12 +542,15 @@ lta_status lta_init(lta_handle *handle, lt_chip *chip, lt_u8 token)
     next.effect_active = 0U;
     next.effect_playing = 0U;
     next.effect_noise_mode = 0U;
+    next.sfx_attenuation = 0U;
+    next.music_paused = next.effect_paused = 0U;
     next.last_now = 0UL;
     {
         unsigned i;
         for (i = 0; i < 4U; ++i) {
             next.kind[i] = LTA_KIND_NONE;
             next.level[i] = 15U;
+            next.music_attenuation[i] = 0U;
             next.effect_kind[i] = LTA_KIND_NONE;
             next.effect_level[i] = 15U;
             next.deadline[i] = 0UL;
@@ -589,4 +610,57 @@ lta_status lta_command(lta_handle *h, const lta_request *r)
     case LTA_OP_NOISE_MODE: return lta_noise_mode(h, r);
     default: return LTA_UNSUPPORTED;
     }
+}
+
+lta_status lta_music_attenuation(lta_handle *h, lt_u8 channel, lt_u8 value)
+{
+    lta_status status;
+    lt_u8 bit;
+    if (!h || channel > 3U || value > 15U) return LTA_INVALID;
+    status = lta_preflight_active(h);
+    if (status != LTA_OK) return status;
+    bit = (lt_u8)(1U << channel);
+    if (!(h->mask & bit)) return LTA_OWNER;
+    h->music_attenuation[channel] = value;
+    if ((h->playing & bit) && !(h->effect_mask & bit))
+        (void)lt_attenuate(h->chip, h->token, channel,
+                           output_level(h, channel, h->level[channel], 0), 1);
+    return LTA_OK;
+}
+
+lta_status lta_sfx_attenuation(lta_handle *h, lt_u8 value)
+{
+    lta_status status;
+    unsigned i;
+    if (!h || value > 15U) return LTA_INVALID;
+    status = lta_preflight_active(h);
+    if (status != LTA_OK) return status;
+    h->sfx_attenuation = value;
+    for (i = 0; i < 4U; ++i)
+        if (h->effect_playing & (1U << i))
+            (void)lt_attenuate(h->chip, h->token, (lt_u8)i,
+                               output_level(h, i, h->effect_level[i], 1), 1);
+    return LTA_OK;
+}
+
+lta_status lta_layer_pause(lta_handle *h, lt_u8 effect, lt_u8 paused)
+{
+    lta_status status;
+    unsigned i;
+    if (!h || effect > 1U || paused > 1U) return LTA_INVALID;
+    status = lta_preflight_active(h);
+    if (status != LTA_OK) return status;
+    if (effect && !h->effect_active) return LTA_STATE;
+    if (effect) h->effect_paused = paused;
+    else h->music_paused = paused;
+    for (i = 0; i < 4U; ++i) {
+        lt_u8 bit = (lt_u8)(1U << i);
+        if (effect) {
+            if (!(h->effect_playing & bit)) continue;
+        } else if (!(h->playing & bit) || (h->effect_mask & bit)) continue;
+        (void)lt_attenuate(h->chip, h->token, (lt_u8)i,
+                           output_level(h, i, effect ? h->effect_level[i] :
+                                        h->level[i], effect), 1);
+    }
+    return LTA_OK;
 }

@@ -1,0 +1,17 @@
+{
+  "complete": true,
+  "cpu_hz": 4772728,
+  "started": "2026-10-27T00:17:45.814649+00:00",
+  "lease_acquired": true,
+  "owned_pid": 24936,
+  "irq0_unchanged": false,
+  "STREAM": "PASS packed/plain trace\r\nPASS generated assets\r\nPASS attenuation/loops\r\nPASS malformed/bounds\r\nstream checks failures=0; handle=66 clip-player=12 stream=20 player=20 cursor=10\r\n",
+  "AUDIO": "audio core tests passed\r\n",
+  "SFX": "sfx core tests passed\r\n",
+  "SCORE": "PASS shared score scheduler and exact PSG trace\r\n",
+  "STRMBEN": "probe PIT clocks=53738 calls=1000\r\nchirp PIT clocks=159956 calls=70 bytes=15\r\nclip PIT clocks=142046 calls=70 event-bytes=12\r\nplain-phrase PIT clocks=3439130 calls=4810 bytes=225\r\nphrase PIT clocks=3466592 calls=4810 bytes=35\r\nsizes handle=66 clip-player=12 descriptor=20 stream-player=20 cursor=10\r\n",
+  "STRMDEMO": "Original PSG stream / duck / looping effect demo\r\nL loop, C cancel at boundary, S stop effect, E pause effect,\r\nP pause music, Escape quit. /auto runs six seconds.\r\nSTREAMDEMO status=0 frames=360 muted/released=1\r\n",
+  "owned_child_stopped": true,
+  "lease_released": true,
+  "irq0_sample_note": "The full-suite harness sampled before BIOS initialization; irq0_unchanged=false is not a program entry/exit comparison. DEMO-NATIVE.json performs the final comparison inside the demo and passes."
+}

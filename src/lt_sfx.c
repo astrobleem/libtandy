@@ -214,6 +214,8 @@ static void clear_player(lt_sfx_player *player)
     player->elapsed = 0U;
     player->active = 0U;
     player->borrowed_mask = 0U;
+    player->plays_left = 1U;
+    player->cancel = player->paused = 0U;
 }
 
 lta_status lt_sfx_init(lt_sfx_player *player, lta_handle *audio)
@@ -226,6 +228,8 @@ lta_status lt_sfx_init(lt_sfx_player *player, lta_handle *audio)
     next.elapsed = 0U;
     next.active = 0U;
     next.borrowed_mask = 0U;
+    next.plays_left = 1U;
+    next.cancel = next.paused = 0U;
     *player = next;
     return LTA_OK;
 }
@@ -259,6 +263,8 @@ lta_status lt_sfx_trigger(lt_sfx_player *player, const lt_sfx_clip *clip)
     player->elapsed = 0U;
     player->active = 1U;
     player->borrowed_mask = borrowed;
+    player->plays_left = 1U;
+    player->cancel = player->paused = 0U;
     return LTA_OK;
 }
 
@@ -288,13 +294,20 @@ lta_status lt_sfx_tick(lt_sfx_player *player)
         clear_player(player);
         return LTA_STATE;
     }
+    if (player->paused) return LTA_OK;
     clip = player->clip;
     if (!clip || player->elapsed > clip->duration_ticks ||
         player->event_index > clip->event_count) return LTA_INVALID;
     if (player->elapsed == clip->duration_ticks) {
-        status = lta_overlay_end(player->audio);
-        if (status == LTA_OK) clear_player(player);
-        return status;
+        if (player->cancel || player->plays_left == 1U) {
+            status = lta_overlay_end(player->audio);
+            if (status == LTA_OK) clear_player(player);
+            return status;
+        }
+        if (player->plays_left) --player->plays_left;
+        status = lta_overlay_stop(player->audio, player->borrowed_mask);
+        if (status != LTA_OK) return status;
+        player->elapsed = player->event_index = 0U;
     }
     /* One caller tick may contain several ordered register changes. */
     while (player->event_index < clip->event_count &&
@@ -328,4 +341,30 @@ lta_status lt_sfx_stop(lt_sfx_player *player)
 lta_status lt_sfx_reset(lt_sfx_player *player)
 {
     return lt_sfx_stop(player);
+}
+
+lta_status lt_sfx_loop(lt_sfx_player *p, const lt_sfx_clip *clip, lt_u16 plays)
+{
+    lta_status status = lt_sfx_trigger(p, clip);
+    if (status == LTA_OK) p->plays_left = plays;
+    return status;
+}
+
+lta_status lt_sfx_cancel(lt_sfx_player *p)
+{
+    if (!p || !p->audio) return LTA_INVALID;
+    if (p->active) p->cancel = 1U;
+    return LTA_OK;
+}
+
+lta_status lt_sfx_pause(lt_sfx_player *p, lt_u8 paused)
+{
+    if (!p || !p->audio || paused > 1U) return LTA_INVALID;
+    if (!p->active) return LTA_STATE;
+    {
+        lta_status status = lta_layer_pause(p->audio, 1U, paused);
+        if (status != LTA_OK) return status;
+    }
+    p->paused = paused;
+    return LTA_OK;
 }
