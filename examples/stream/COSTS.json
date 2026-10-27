@@ -1,0 +1,112 @@
+{
+  "build/baseline/lt_audio.obj": [
+    {
+      "name": "_TEXT",
+      "segment_class": "CODE",
+      "bytes": 4505
+    },
+    {
+      "name": "CONST",
+      "segment_class": "DATA",
+      "bytes": 0
+    },
+    {
+      "name": "CONST2",
+      "segment_class": "DATA",
+      "bytes": 0
+    },
+    {
+      "name": "_DATA",
+      "segment_class": "DATA",
+      "bytes": 0
+    }
+  ],
+  "build/baseline/lt_sfx.obj": [
+    {
+      "name": "_TEXT",
+      "segment_class": "CODE",
+      "bytes": 1778
+    },
+    {
+      "name": "CONST",
+      "segment_class": "DATA",
+      "bytes": 0
+    },
+    {
+      "name": "CONST2",
+      "segment_class": "DATA",
+      "bytes": 0
+    },
+    {
+      "name": "_DATA",
+      "segment_class": "DATA",
+      "bytes": 0
+    }
+  ],
+  "build/dos/lt_audio.obj": [
+    {
+      "name": "_TEXT",
+      "segment_class": "CODE",
+      "bytes": 5135
+    },
+    {
+      "name": "CONST",
+      "segment_class": "DATA",
+      "bytes": 0
+    },
+    {
+      "name": "CONST2",
+      "segment_class": "DATA",
+      "bytes": 0
+    },
+    {
+      "name": "_DATA",
+      "segment_class": "DATA",
+      "bytes": 0
+    }
+  ],
+  "build/dos/lt_sfx.obj": [
+    {
+      "name": "_TEXT",
+      "segment_class": "CODE",
+      "bytes": 2014
+    },
+    {
+      "name": "CONST",
+      "segment_class": "DATA",
+      "bytes": 0
+    },
+    {
+      "name": "CONST2",
+      "segment_class": "DATA",
+      "bytes": 0
+    },
+    {
+      "name": "_DATA",
+      "segment_class": "DATA",
+      "bytes": 0
+    }
+  ],
+  "build/dos/lt_stream.obj": [
+    {
+      "name": "_TEXT",
+      "segment_class": "CODE",
+      "bytes": 2083
+    },
+    {
+      "name": "CONST",
+      "segment_class": "DATA",
+      "bytes": 0
+    },
+    {
+      "name": "CONST2",
+      "segment_class": "DATA",
+      "bytes": 0
+    },
+    {
+      "name": "_DATA",
+      "segment_class": "DATA",
+      "bytes": 0
+    }
+  ]
+}

@@ -1,0 +1,29 @@
+{
+  "name": "chirp",
+  "channel_mask": 2,
+  "clock_hz": 3579545,
+  "rate_num": 60,
+  "rate_den": 1,
+  "commands": [
+    [
+      "tone",
+      1,
+      180,
+      3
+    ],
+    [
+      "wait",
+      3
+    ],
+    [
+      "tone",
+      1,
+      140,
+      5
+    ],
+    [
+      "wait",
+      3
+    ]
+  ]
+}

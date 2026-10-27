@@ -7,7 +7,7 @@
 #include <limits.h>
 #include "lt_sound.h"
 
-#define LTA_API_VERSION 0x0201U
+#define LTA_API_VERSION 0x0202U
 
 #if ULONG_MAX == 0xFFFFFFFFUL
 typedef unsigned long lta_u32;
@@ -74,6 +74,8 @@ typedef struct {
     /* Private overlay state used by the caller-driven clip player. */
     lt_u8 effect_mask, effect_active, effect_playing, effect_kind[4];
     lt_u8 effect_level[4], effect_noise_mode;
+    lt_u8 music_attenuation[4], sfx_attenuation;
+    lt_u8 music_paused, effect_paused;
 } lta_handle;
 
 #define LTA_KIND_NONE 0U
@@ -94,6 +96,18 @@ lt_u16 lta_capabilities(void);
  * deadline. STOP mutes/cancels deadlines but keeps claims. Request and handle
  * must not overlap. Capabilities are static; no hardware/frequency detection. */
 lta_status lta_command(lta_handle *handle, const lta_request *request);
+
+/* Add 0..15 PSG attenuation steps, saturating at silence. Original levels
+ * remain intact. Applies immediately to audible voices, including overlays.
+ * Init/acquire resets both controls to zero. Serialized like commands. These
+ * PSG controls do not change the PC speaker's fixed output amplitude. */
+lta_status lta_music_attenuation(lta_handle *handle, lt_u8 channel,
+                                  lt_u8 attenuation);
+lta_status lta_sfx_attenuation(lta_handle *handle, lt_u8 attenuation);
+/* Silence one layer, preserving logical levels and ownership. Transport
+ * players freeze their own cursors separately. Effect pause retains claims;
+ * music underneath keeps progressing. Resume restores adjusted volumes. */
+lta_status lta_layer_pause(lta_handle *handle, lt_u8 effect, lt_u8 paused);
 
 /* Internal interface for the reusable clip player in lt_sfx.h. Applications
  * should use lt_sfx_* instead of calling these overlay helpers directly. */

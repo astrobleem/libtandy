@@ -58,6 +58,8 @@ typedef struct {
     lta_handle *audio;
     const lt_sfx_clip *clip;
     lt_u8 event_index, elapsed, active, borrowed_mask;
+    lt_u16 plays_left;
+    lt_u8 cancel, paused;
 } lt_sfx_player;
 
 /* Init is silent and may run before audio ownership is acquired. */
@@ -72,6 +74,16 @@ lta_status lt_sfx_trigger(lt_sfx_player *player, const lt_sfx_clip *clip);
 /* Call once per caller-defined game tick. Multiple same-tick records are
  * applied in order. Expiry restores the latest base music voice state. */
 lta_status lt_sfx_tick(lt_sfx_player *player);
+
+/* Total plays: 1 = once, 0 = infinite, 2..65535 = finite. Cancel finishes
+ * the current pass, then restores music. Pause freezes the cursor and silences
+ * its layer while holding the reservation; resume restores adjusted levels.
+ * Cancel while paused takes effect at the boundary after resume.
+ * Stop is immediate and discards the cursor; resume does not revive a stop. */
+lta_status lt_sfx_loop(lt_sfx_player *player, const lt_sfx_clip *clip,
+                        lt_u16 total_plays);
+lta_status lt_sfx_cancel(lt_sfx_player *player);
+lta_status lt_sfx_pause(lt_sfx_player *player, lt_u8 paused);
 
 /* Stop restores the latest base music state immediately. Reset also clears
  * the elapsed tick and event cursor; both are safe when already idle. */

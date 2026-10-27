@@ -109,6 +109,18 @@ synthetic pixels/state and do not qualify DOS ABI, IRQ timing or hardware.
 The original public-edition build record is historical. `VALIDATION.md` also
 records the results for this local native-audio integration candidate.
 
+## Compact streams, ducking, loops and pause
+
+The optional `lt_stream.h` module plays bounded compiled logical PSG streams
+with phrase references and explicit rate/clock/chip metadata. Music and effects
+have independent additive attenuation, and clips can loop finitely or forever,
+cancel at a boundary, stop immediately, or silently pause/resume. Stream and
+clip pause freeze their cursors while preserving ownership and original levels.
+`STRMDEMO.EXE` is an original standalone DOS example; `/auto` demonstrates
+music ducking, a looping effect, both pause controls and clean cancellation.
+See [the API and format guide](docs/COMPACT-AUDIO.md) and
+[measured validation](docs/COMPACT-AUDIO-VALIDATION.md).
+
 ## Native PSG effects and scores
 
 Short effects are versioned `lt_sfx_clip` command sequences. A game initializes

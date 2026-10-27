@@ -8,6 +8,7 @@ import sys
 
 ROOT = Path(__file__).resolve().parents[1]
 TESTS = {
+    'stream': ('stream_core', ['lt_chip', 'lt_audio', 'lt_sfx', 'lt_stream']),
     'smscheck': ('sms_boot_core', ['lt_chip', 'lt_sms_boot']),
     'chip': ('chip_core', ['lt_chip']),
     'audio': ('audio_core', ['lt_chip', 'lt_audio']),
@@ -23,6 +24,10 @@ TESTS = {
 }
 # DOS-only demos of the platform services: name -> sources.
 DOS_DEMOS = {
+    'STRMDEMO': ['examples/stream_demo.c', 'src/lt_chip.c', 'src/lt_audio.c',
+                 'src/lt_sfx.c', 'src/lt_stream.c', 'adapters/lt_dos.c'],
+    'STRMBEN': ['tests/stream_bench.c', 'src/lt_chip.c', 'src/lt_audio.c',
+                'src/lt_sfx.c', 'src/lt_stream.c'],
     'SMSBOOT': ['examples/sms_demo.c', 'src/lt_chip.c',
                 'src/lt_sms_boot.c', 'adapters/lt_dos.c', 'adapters/lt_tick_dos.c'],
     'DOEBEL': ['examples/doebel_demo.c', 'src/lt_chip.c',

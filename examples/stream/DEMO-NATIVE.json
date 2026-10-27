@@ -1,0 +1,10 @@
+{
+  "complete": true,
+  "cpu_hz": 4772728,
+  "started": "2026-10-27T00:20:04.106793+00:00",
+  "lease_acquired": true,
+  "owned_pid": 33936,
+  "STRMDEMO": "Original PSG stream / duck / looping effect demo\r\nL loop, C cancel at boundary, S stop effect, E pause effect,\r\nP pause music, Escape quit. /auto runs six seconds.\r\nSTREAMDEMO status=0 frames=360 muted/released=1 irq0_unchanged=1\r\n",
+  "owned_child_stopped": true,
+  "lease_released": true
+}
