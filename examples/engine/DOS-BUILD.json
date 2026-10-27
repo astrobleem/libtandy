@@ -30,7 +30,6 @@
     "include/lt_time_dos.h": "7102506c96865900947cfbc6fdcf47b8b5c0af4b8b1c4eae8d234f8aa69a252a",
     "include/lt_surface.h": "5ce7a074d1bc734fd460ff70590e4a8234f84df3f95e7beceed226854b4392a9"
   },
-  "native_sha256": "9928f229c5d8da5cf59ccd27b449120718fed571ff84cfb28b5cd045bda33ed9",
   "zip_sha256": "1ab2c7f0441464cca06f3d28cf07947ca075900bda6fa439da71e1015aa6451d",
   "members": {
     "DOCS/ENGINE.MD": {
@@ -78,5 +77,6 @@
     "DOCS/ENGINE.MD": "docs/ENGINE.md",
     "DOCS/VALIDATE.MD": "docs/ENGINE-VALIDATION.md",
     "LICENSE.TXT": "LICENSE"
-  }
+  },
+  "native_lf_sha256": "59f43dc5b506abda53b58bb4eaeb50fee860b8ae85c37e3e014bba0c09c3f9bd"
 }

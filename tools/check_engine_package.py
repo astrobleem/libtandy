@@ -11,7 +11,8 @@ native = json.loads((DIRECTORY / 'NATIVE.json').read_text())
 sha = lambda data: hashlib.sha256(data).hexdigest()
 for name, digest in manifest['source_lf_sha256'].items():
     assert sha((ROOT / name).read_bytes().replace(b'\r\n', b'\n')) == digest, name
-assert sha((DIRECTORY / 'NATIVE.json').read_bytes()) == manifest['native_sha256']
+assert sha((DIRECTORY / 'NATIVE.json').read_bytes().replace(b'\r\n', b'\n')) == \
+    manifest['native_lf_sha256']
 assert native['complete'] and native['owned_child_stopped'] and native['lease_released']
 for run in ('CORE', 'VIEW', 'VIDEO'):
     assert 'FAIL' not in native[run] and ('passed' in native[run] or 'PASS' in native[run]), run
