@@ -12,3 +12,4 @@ __pycache__/
 *.img
 *.zip
 !examples/smsboot/SMSBOOT.ZIP
+!examples/engine/ENGINE.ZIP

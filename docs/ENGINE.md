@@ -136,6 +136,11 @@ The simulation and camera can still be reused with a caller's renderer.
 
 ## Ready-to-run DOS demonstrations
 
+[Download the qualified ENGINE.ZIP](https://github.com/astrobleem/libtandy/raw/refs/heads/main/examples/engine/ENGINE.ZIP)
+for self-contained DOS executables and instructions, or build from source.
+The [package manifest](../examples/engine/DOS-BUILD.json) and CI bind the
+download to its qualified source and native execution receipt.
+
 Build with the normal Open Watcom helper:
 
 ```powershell

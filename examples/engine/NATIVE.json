@@ -1,0 +1,89 @@
+{
+  "complete": true,
+  "cpu_hz": 4772728,
+  "started": "2026-10-27T14:32:26.495909+00:00",
+  "captures": [
+    {
+      "label": "G320-early",
+      "mode": 9,
+      "bytes": 1350
+    },
+    {
+      "label": "G320-late",
+      "mode": 9,
+      "bytes": 1432
+    },
+    {
+      "label": "G160-early",
+      "mode": 8,
+      "bytes": 1486
+    },
+    {
+      "label": "G160-late",
+      "mode": 8,
+      "bytes": 1436
+    },
+    {
+      "label": "T80-early",
+      "mode": 3,
+      "bytes": 1764
+    },
+    {
+      "label": "T80-late",
+      "mode": 3,
+      "bytes": 1747
+    },
+    {
+      "label": "T40-early",
+      "mode": 1,
+      "bytes": 1574
+    },
+    {
+      "label": "T40-late",
+      "mode": 1,
+      "bytes": 1509
+    },
+    {
+      "label": "SLOW-early",
+      "mode": 9,
+      "bytes": 4442
+    },
+    {
+      "label": "SLOW-late",
+      "mode": 9,
+      "bytes": 4515
+    }
+  ],
+  "TXTDEMO.EXE": {
+    "bytes": 15910,
+    "sha256": "2c5be6da695efe692bbcebf2bce43082572a8971fc8c27915aec57b45c763c37"
+  },
+  "ENGINE.EXE": {
+    "bytes": 13578,
+    "sha256": "e88b1480bcfa405499b20138e0fd59400a8714ea7a03e4b026e654a143efb703"
+  },
+  "ENGVIEW.EXE": {
+    "bytes": 42966,
+    "sha256": "48e67d3b46992d6e0c7ec9216094a6dcd3bd1fef6922cb70f777b6d2d75cd622"
+  },
+  "ENGDEMO.EXE": {
+    "bytes": 15912,
+    "sha256": "5f3f80eaa62734c6949d61c798a917c6ae790b2ff544d388320a108f103660de"
+  },
+  "ENGDOS.EXE": {
+    "bytes": 11498,
+    "sha256": "dcfbfdc2c9f0f03c3209202165647846af6606795017c1277eb5dfcefac8d25b"
+  },
+  "lease_acquired": true,
+  "owned_pid": 22140,
+  "owned_child_stopped": true,
+  "lease_released": true,
+  "CORE": "engine passed lifecycle, mutation, foreground debt, collision, camera; world=18 object=6 box=8 camera=8 map=14 behavior=10 bytes\r\n",
+  "VIEW": "engine view passed native 8/9 banks, nibble edges, text 1/3, clipping; view=14 bytes\r\n",
+  "VIDEO": "engine DOS mode/page/cursor restore, double-open/close, invalid mode, IRQ0/1 unchanged: PASS; video=22 bytes\r\n",
+  "G320": "ENGINE mode=9 ticks=300 frames=76 debt=0 awake/start=1/1 hits=1/141 camera=316 xy=330,176 PASS\r\n",
+  "G160": "ENGINE mode=8 ticks=300 frames=76 debt=0 awake/start=1/1 hits=1/141 camera=396 xy=330,176 PASS\r\n",
+  "T80": "ENGINE mode=3 ticks=300 frames=76 debt=0 awake/start=1/1 hits=1/141 camera=128 xy=330,176 PASS\r\n",
+  "T40": "ENGINE mode=1 ticks=300 frames=76 debt=0 awake/start=1/1 hits=1/141 camera=312 xy=330,176 PASS\r\n",
+  "SLOW": "ENGINE mode=9 ticks=300 frames=76 debt=0 awake/start=1/1 hits=1/141 camera=314 xy=330,176 PASS\r\n"
+}

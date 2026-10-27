@@ -13,3 +13,5 @@ jobs:
         run: python3 sound/tests/run.py --cc gcc
       - name: Qualified optional DOS example package
         run: python3 tools/check_sms_package.py
+      - name: Qualified optional engine DOS package
+        run: python3 tools/check_engine_package.py

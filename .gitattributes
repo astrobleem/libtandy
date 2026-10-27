@@ -9,3 +9,4 @@ sound/tests/audition/*.H text eol=crlf
 examples/doebel/DOEBEL.VGM binary
 examples/doebel/NOTES.csv binary
 examples/smsboot/SMSBOOT.ZIP binary
+examples/engine/ENGINE.ZIP binary
