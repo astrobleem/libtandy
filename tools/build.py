@@ -8,6 +8,8 @@ import sys
 
 ROOT = Path(__file__).resolve().parents[1]
 TESTS = {
+    'engine': ('engine_core', ['lt_engine']),
+    'engview': ('engine_view', ['lt_engine_view']),
     'stream': ('stream_core', ['lt_chip', 'lt_audio', 'lt_sfx', 'lt_stream']),
     'smscheck': ('sms_boot_core', ['lt_chip', 'lt_sms_boot']),
     'chip': ('chip_core', ['lt_chip']),
@@ -24,6 +26,14 @@ TESTS = {
 }
 # DOS-only demos of the platform services: name -> sources.
 DOS_DEMOS = {
+    'ENGDOS': ['tests/engine_dos.c', 'src/lt_engine_view.c',
+               'adapters/lt_engine_dos.c'],
+    'ENGDEMO': ['examples/engine_demo.c', 'src/lt_engine.c',
+                'src/lt_engine_view.c', 'adapters/lt_engine_dos.c',
+                'src/lt_time.c', 'adapters/lt_time_dos.c'],
+    'TXTDEMO': ['examples/engine_text_demo.c', 'src/lt_engine.c',
+                'src/lt_engine_view.c', 'adapters/lt_engine_dos.c',
+                'src/lt_time.c', 'adapters/lt_time_dos.c'],
     'STRMDEMO': ['examples/stream_demo.c', 'src/lt_chip.c', 'src/lt_audio.c',
                  'src/lt_sfx.c', 'src/lt_stream.c', 'adapters/lt_dos.c'],
     'STRMBEN': ['tests/stream_bench.c', 'src/lt_chip.c', 'src/lt_audio.c',
