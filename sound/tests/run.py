@@ -23,6 +23,7 @@ def main():
     out.mkdir(parents=True, exist_ok=True)
     for name, extra, defs in (('portable_midi', ['SMF.C'], []),
                               ('bank_test', [], []),
+                              ('fxmerge', ['FXMERGE.C'], []),
                               ('trace_default', [], []),
                               ('trace_default', [], ['-DWITH_BANK'])):
         tag = name + ('_bank' if defs else '')
