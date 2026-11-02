@@ -7,6 +7,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # verify immutable downloads against their qualified commits
       - name: Existing public host suite
         run: python3 tools/build.py --target host --cc gcc
       - name: Portable MIDI checks

@@ -26,8 +26,11 @@ typedef struct {
     lt_gfx_u8 LT_GFX_FAR *pixels;
 } lt_gfx_surface;
 
-/* The caller supplies at least LT_GFX_BYTES bytes. A NULL pointer makes the
- * surface invalid; drawing operations then do nothing. Colors use low 4 bits. */
+/* The caller supplies at least LT_GFX_BYTES bytes. On 16-bit Watcom the
+ * whole buffer must fit in one 64 KiB FAR-pointer window (base offset <=
+ * 0x8000); these APIs do not normalize segment-crossing or HUGE pointers.
+ * A NULL pointer makes the surface invalid; drawing operations then do
+ * nothing. Colors use low 4 bits. */
 void lt_gfx_init(lt_gfx_surface *surface, lt_gfx_u8 LT_GFX_FAR *pixels);
 void lt_gfx_clear(lt_gfx_surface *surface, lt_gfx_u8 color);
 int lt_gfx_get(const lt_gfx_surface *surface, lt_gfx_i16 x, lt_gfx_i16 y);

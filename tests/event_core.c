@@ -15,7 +15,7 @@ typedef char lte_event_size_must_be_14[(sizeof(lte_event) == 14U) ? 1 : -1];
 typedef char lte_event_far_pointer_must_be_4[
     (sizeof(lte_event LTE_FAR *) == 4U) ? 1 : -1];
 typedef char lte_event_near_pointer_must_be_2[
-    (sizeof(lte_event *) == 2U) ? 1 : -1];
+    (sizeof(lte_event __near *) == 2U) ? 1 : -1];
 typedef char lte_queue_size_must_be_10[(sizeof(lte_event_queue) == 10U) ? 1 : -1];
 #endif
 
