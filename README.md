@@ -8,6 +8,18 @@ Windows 3.0 USER/GDI project named libwintandy.
 
 
 
+## 8088 library improvements
+
+Optional additions: [opaque packed tiles](docs/TILE8.md),
+[faster clears/spans](docs/GFX-FILL.md),
+[four-model IRQ0 support](docs/TIMER-QUALIFICATION.md),
+[best-effort orderly DOS guards](docs/DOS-GUARD.md), and an explicit-loss
+[AY control-frame adapter](docs/AY-FRAMES.md). All are independently usable;
+no application assets, song data or mandatory runtime are added.
+
+See [qualification and hardware limits](docs/IMPROVEMENTS-VALIDATION.md).
+Emulator cycle settings are not calibrated physical EX performance.
+
 ## Scope and contracts
 
 | Modules | Contract |
@@ -17,6 +29,9 @@ Windows 3.0 USER/GDI project named libwintandy.
 | `lt_sound.h`, `lt_chip.c`, DOS sink | Caller owns hardware exclusion and scheduling. Owner tokens track channels; they do not arbitrate against other applications. Stop mutes before unclaim. |
 | `lt_gfx.h`, `lt_gfx.c` | Caller supplies a valid 32 KiB packed four-bank mode-9 aperture. No mode switch, allocation or resident service in the raster core. |
 | `lt_dos_app.h` (optional) | Foreground convenience setup for mode 9, the direct video aperture, BIOS input state and the default Tandy sound port. Saves/restores video page and cursor; no allocation or resident service. |
+| `lt_gfx_tile8.h` | Optional opaque packed 8x8 tile; clipped fallback and 8088 fast path, no heap/cache. |
+| `lt_guard_dos.h` | Optional DOS3+ INT23/24 quit/fail latches; best-effort foreground cleanup, adapter requires `-s -zu`. |
+| `lt_ay.h` | Optional AY frame-to-PSG plan and audio-facade apply; explicit clocks/loss flags, caller-resolved envelopes, no player/timer. |
 | `lt_gfx_sprite8.h` | Index 0 is transparent; nonzero indices mapped to black remain opaque. Ordered destination overlap is allowed; source/framebuffer aliasing is excluded. |
 | `lt_surface.h`, `lt_media.h` | Bounded caller-owned INDEX8 storage, clipping, blits and palettes. No SDL code or compatibility claim. |
 | `lt_event.h`, DOS input | Bounded foreground queue; BIOS press events and optional mouse snapshots. No key-up/held-state guarantee, installed ISR or mouse callback (see `lt_keys_dos.h` for held keys). |
@@ -48,7 +63,22 @@ python tools/build.py --target dos --watcom C:/WATCOM
 This compiles the modules for real-mode DOS with Open Watcom `-0 -ms -ecc`,
 builds `build/dos/DEMO.EXE`, `build/dos/SFXDEMO.EXE` and the DOS unit-test
 executables, and does not run them or start an emulator. The code targets
-8086/8088, not 186/286 instructions.
+8086/8088, not 186/286 instructions. Use `--model compact`, `--model medium`
+or `--model large` to qualify a different DOS ABI; every linked component
+must use the same model/calling convention. DOS builds also include `GUARD`
+and `TILEBEN` diagnostic/benchmark programs.
+
+After building, optional native qualification is explicit:
+
+```sh
+python tools/qualify_dos.py --dosbox /path/to/dosbox-x
+python tests/tick_matrix.py --watcom /path/to/watcom --dosbox /path/to/dosbox-x
+python tools/qualify_guard.py --watcom /path/to/watcom --dosbox /path/to/dosbox-x
+python tests/gfx_far_matrix.py --watcom /path/to/watcom --dosbox /path/to/dosbox-x
+```
+
+These tools use installed software and isolated build directories; they do
+not download toolchains or modify physical hardware.
 In DOS on a compatible Tandy, `DEMO` enters mode 9, polls BIOS key presses,
 moves an original square, plays a tone and restores the prior video mode, page
 and cursor while muting/releasing its sound channels when Escape is pressed.

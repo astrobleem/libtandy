@@ -1,9 +1,12 @@
 /* SPDX-License-Identifier: MIT */
-/* Fixed-rate IRQ0 update clock; see lt_tick_dos.h. Small or compact model:
- * the private stack is in DGROUP so near pointers to the callback's locals
- * stay valid whatever stack the interrupt arrived on. */
-#if !defined(__WATCOMC__) || !defined(__I86__)
-#error lt_tick_dos.c requires Open Watcom 16-bit x86
+/* Fixed-rate IRQ0 update clock; see lt_tick_dos.h. Explicit near state
+ * keeps the private stack and assembly operands in DGROUP in every tested
+ * memory model, including far-data builds with -zt=0. Compile with -s. */
+#if !defined(__WATCOMC__) || !defined(__I86__) || !defined(__DOS__)
+#error lt_tick_dos.c requires Open Watcom 16-bit DOS
+#endif
+#if !defined(__SW_S) || !__SW_S
+#error Compile lt_tick_dos.c and all interrupt-reachable C with -s
 #endif
 #include <conio.h>
 #include <dos.h>
@@ -11,20 +14,27 @@
 
 typedef void (__interrupt __far *lttk_vector)(void);
 
-static lttk_vector previous;
-static lttk_work work_fn;
-static void *work_ctx;
-static unsigned divisor_now;
-static volatile unsigned long tick_count;
-static unsigned long bios_acc;
-static volatile unsigned waiting, in_work, defer_depth;
-static volatile unsigned char running;
-static unsigned char is_open;
-static unsigned backlog_peak;
-static unsigned long late_count;
-static unsigned saved_ss, saved_sp, private_sp;
-static unsigned char private_stack[LTTK_STACK_BYTES];
-static void (*drain_ptr)(void);
+/* Keep one object per declaration: __near applies per declarator, not
+ * to every name in a comma-separated declaration in far-data models. */
+static lttk_vector __near previous;
+static lttk_work __near work_fn;
+static void * __near work_ctx;
+static unsigned __near divisor_now;
+static volatile unsigned long __near tick_count;
+static unsigned long __near bios_acc;
+static volatile unsigned __near waiting;
+static volatile unsigned __near in_work;
+static volatile unsigned __near defer_depth;
+static volatile unsigned char __near running;
+static unsigned char __near is_open;
+static volatile unsigned __near backlog_peak;
+static volatile unsigned __near fault_flags;
+static volatile unsigned long __near late_count;
+static unsigned __near saved_ss;
+static unsigned __near saved_sp;
+static unsigned __near private_sp;
+static unsigned char __near private_stack[LTTK_STACK_BYTES];
+static void (__near * __near drain_ptr)(void);
 
 static unsigned lttk_cli(void)
 {
@@ -45,17 +55,28 @@ static void lttk_sti(unsigned f)
     }
 }
 
-/* On the private stack with IF=1; returns with IF=0 when nothing waits, so
- * a tick arriving after the last check is never left behind. */
-static void lttk_drain(void)
+/* Called with interrupts disabled. A fault is sticky until close/open;
+ * never silently wrap pending work or nesting into an apparently idle state. */
+static void __near lttk_fault(unsigned flag)
 {
-    for (;;) {
+    fault_flags |= flag;
+    running = 0;
+    waiting = 0;
+}
+
+/* On the private stack with IF=1; always return with IF=0 before restoring
+ * SS:SP. A bounded drain retains excess debt for the next timer interrupt. */
+static void __near lttk_drain(void)
+{
+    unsigned serviced;
+    for (serviced = 0; serviced < LTTK_DRAIN_BUDGET; ++serviced) {
         _disable();
-        if (!waiting || defer_depth) return;
+        if (!waiting || defer_depth || fault_flags) return;
         --waiting;
         _enable();
         if (running) work_fn(work_ctx);
     }
+    _disable();
 }
 
 static void __interrupt __far lttk_isr(void)
@@ -67,6 +88,11 @@ static void __interrupt __far lttk_isr(void)
         (*previous)();              /* BIOS tick, INT 1Ch, EOI */
     } else {
         outp(0x20, 0x20);
+    }
+    if (fault_flags) return;
+    if (waiting == 65535U) {
+        lttk_fault(LTTK_FAULT_PENDING);
+        return;
     }
     ++waiting;
     if (in_work) {                  /* the outer interrupt will run it */
@@ -86,6 +112,9 @@ static void __interrupt __far lttk_isr(void)
         sti
         call word ptr drain_ptr
         cli
+        /* Far-data callbacks may return with DS addressing arbitrary data. */
+        mov ax, ss
+        mov ds, ax
         mov ss, saved_ss
         mov sp, saved_sp
     }
@@ -108,6 +137,13 @@ lttk_status lttk_open(unsigned divisor, lttk_work work, void *context)
     running = 0;
     backlog_peak = 0;
     late_count = 0;
+    fault_flags = 0;
+#ifdef LTTK_TEST
+    {
+        unsigned i;
+        for (i = 0; i < LTTK_STACK_BYTES; ++i) private_stack[i] = 0xa5U;
+    }
+#endif
     private_sp = (unsigned)(private_stack + LTTK_STACK_BYTES - 2U);
     drain_ptr = lttk_drain;
     f = lttk_cli();
@@ -141,6 +177,7 @@ lttk_status lttk_close(void)
 void lttk_run(int on)
 {
     unsigned f = lttk_cli();
+    if (on && fault_flags) { lttk_sti(f); return; }
     if (on && !running) waiting = 0;
     running = (unsigned char)(on != 0);
     lttk_sti(f);
@@ -149,7 +186,10 @@ void lttk_run(int on)
 void lttk_defer(int on)
 {
     unsigned f = lttk_cli();
-    if (on) ++defer_depth;
+    if (on) {
+        if (defer_depth == 65535U) lttk_fault(LTTK_FAULT_DEFER);
+        else ++defer_depth;
+    }
     else if (defer_depth) --defer_depth;
     lttk_sti(f);
 }
@@ -193,5 +233,39 @@ unsigned lttk_backlog_max(void)
 
 unsigned long lttk_late(void)
 {
-    return late_count;
+    unsigned f = lttk_cli();
+    unsigned long result = late_count;
+    lttk_sti(f);
+    return result;
 }
+
+unsigned lttk_faults(void)
+{
+    return fault_flags;
+}
+
+#ifdef LTTK_TEST
+/* Boundary injection and observed stack use, compiled only for native tests. */
+void lttk_test_seed(unsigned pending, unsigned depth)
+{
+    unsigned f = lttk_cli();
+    waiting = pending;
+    defer_depth = depth;
+    lttk_sti(f);
+}
+unsigned lttk_test_pending(void) { return waiting; }
+unsigned lttk_test_stack_used(void)
+{
+    unsigned f = lttk_cli(), i = 0;
+    while (i < LTTK_STACK_BYTES && private_stack[i] == 0xa5U) ++i;
+    lttk_sti(f);
+    return LTTK_STACK_BYTES - i;
+}
+unsigned lttk_test_stack_guard(void)
+{
+    unsigned f = lttk_cli(), i, ok = 1;
+    for (i = 0; i < 16U; ++i) if (private_stack[i] != 0xa5U) ok = 0;
+    lttk_sti(f);
+    return ok;
+}
+#endif

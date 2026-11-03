@@ -3,7 +3,11 @@
 #define LT_TICK_DOS_H
 
 /* Fixed-rate update clock for one foreground DOS program (Open Watcom,
- * 16-bit): the only IRQ0 (PIT channel 0) handler a game installs.
+ * 16-bit small, compact, medium or large model): the only IRQ0 (PIT channel 0)
+ * handler a game installs. Use the same model/calling convention throughout.
+ * Compile this adapter and ALL interrupt-reachable C with -s (no runtime
+ * stack probes). IRQ state/stack are explicitly near; -zt=0 is supported.
+ * User callback stack use, including nested interrupts, must fit 3 KiB.
  *
  * Rate: PIT channel 0 runs in mode 2 with the given divisor, so updates come
  * at 1,193,182 / divisor Hz exactly (LTTK_DIVISOR_60HZ: 60.0001 Hz;
@@ -19,8 +23,11 @@
  * Work: the callback runs once per tick, inside the interrupt, on a private
  * 3 KiB stack in DGROUP with interrupts enabled. If a tick arrives while the
  * callback is still running it is counted and run right afterwards by the
- * outer interrupt, in order, so updates are never lost or reordered, only
- * delayed. Put game updates (input sampling, logic, lt_sfx_tick/lt_score
+ * outer interrupt, in order. Each interrupt drains at most LTTK_DRAIN_BUDGET
+ * callbacks; remaining work is retained until a later IRQ. A callback that
+ * continually exceeds its period is not made realtime by this queue. Pending
+ * count or defer-nesting overflow stops callbacks and sets a sticky fault;
+ * the timer/BIOS clock continues until foreground cleanup. Put game updates (input sampling, logic, lt_sfx_tick/lt_score
  * service) in the callback and draw in the foreground as fast as it goes:
  * logic speed is then independent of drawing speed.
  *
@@ -35,6 +42,9 @@
 #define LTTK_DIVISOR_60HZ 19886U
 #define LTTK_DIVISOR_NES 19854U
 #define LTTK_STACK_BYTES 3072U
+#define LTTK_DRAIN_BUDGET 8U
+#define LTTK_FAULT_PENDING 1U
+#define LTTK_FAULT_DEFER 2U
 
 typedef void (*lttk_work)(void *context);
 
@@ -47,15 +57,17 @@ typedef enum {
                                restored, vector left alone */
 } lttk_status;
 
-/* Install with work stopped (ticks are counted from open). */
+/* Foreground-only open/close; do not call from the callback. Install with
+ * work stopped (ticks are counted from open); a successful open clears faults. */
 lttk_status lttk_open(unsigned divisor, lttk_work work, void *context);
 lttk_status lttk_close(void);
 /* Start (1) or stop (0) calling work. Starting drops ticks counted while
- * stopped, so the first update comes at the next tick. */
+ * stopped, so the first update comes at the next tick. A faulted timer cannot
+ * restart until closed and opened again. Stop is permitted from the callback. */
 void lttk_run(int on);
 /* Hold (1) or release (0) work around foreground code that shares state
  * with the callback. Ticks keep counting; held ones run at the next tick
- * after release. Nests. */
+ * after release, subject to the drain budget. Nests up to 65535 levels. */
 void lttk_defer(int on);
 
 unsigned lttk_divisor(void);
@@ -67,5 +79,7 @@ unsigned long lttk_now(void);
 /* Most ticks that waited for a running callback, and how many ran late. */
 unsigned lttk_backlog_max(void);
 unsigned long lttk_late(void);
+/* Sticky OR of LTTK_FAULT_*; overflow is observable, never silent wrap. */
+unsigned lttk_faults(void);
 
 #endif

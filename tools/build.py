@@ -1,4 +1,4 @@
-"""Build the source-only MIT edition; no downloads or emulator launches."""
+"""Build source-only library components and existing examples; no downloads or emulator launches."""
 from pathlib import Path
 import argparse
 import json
@@ -23,9 +23,15 @@ TESTS = {
     'event': ('event_core', ['lt_event']),
     'keys': ('keys_core', ['lt_keys']),
     'blit16': ('gfx_blit16', ['lt_gfx', 'lt_gfx_rows']),
+    'tile8': ('gfx_tile8', ['lt_gfx_tile8']),
+    'fill': ('gfx_fill', ['lt_gfx']),
+    'ay': ('ay_core', ['lt_chip', 'lt_audio', 'lt_sfx', 'lt_ay']),
 }
-# DOS-only demos of the platform services: name -> sources.
+# DOS-only demos/tests of platform services: name -> sources.
 DOS_DEMOS = {
+    'GUARD': ['tests/guard_dos.c', 'adapters/lt_guard_dos.c'],
+    'TILEBEN': ['tests/tile8_bench.c', 'src/lt_gfx_tile8.c',
+                'src/lt_gfx_rows.c'],
     'ENGDOS': ['tests/engine_dos.c', 'src/lt_engine_view.c',
                'adapters/lt_engine_dos.c'],
     'ENGDEMO': ['examples/engine_demo.c', 'src/lt_engine.c',
@@ -65,6 +71,8 @@ def main():
     parser.add_argument('--gcc-launcher', type=Path)
     parser.add_argument('--runtime-bin', type=Path)
     parser.add_argument('--watcom', type=Path, default=Path('C:/WATCOM'))
+    parser.add_argument('--model', choices=('small', 'compact', 'medium', 'large'),
+                        default='small', help='DOS memory model (default: small)')
     args = parser.parse_args()
     if args.target == 'dos' and (args.gcc_launcher or args.runtime_bin):
         parser.error('--gcc-launcher and --runtime-bin apply to host builds')
@@ -72,7 +80,8 @@ def main():
         parser.error('--runtime-bin requires --gcc-launcher')
     if set(TESTS) & {name.lower() for name in DOS_DEMOS}:
         raise RuntimeError('DOS test/demo executable names collide')
-    out = ROOT / 'build' / args.target
+    out = ROOT / 'build' / (args.target if args.target != 'dos' or
+                           args.model == 'small' else 'dos-' + args.model)
     out.mkdir(parents=True, exist_ok=True)
     env = dict(os.environ)
     records = []
@@ -119,17 +128,22 @@ def main():
             cc = watcom / 'BINNT/wcl.exe'
         else:
             # Open Watcom's Linux host layout (lower-case directories)
+            bindir = watcom / ('binl64' if (watcom / 'binl64/wcl').exists()
+                               else 'binl')
             env.update(WATCOM=str(watcom), INCLUDE=str(watcom / 'h'),
                        LIB=str(watcom / 'lib286') + os.pathsep +
                            str(watcom / 'lib286/dos'),
-                       PATH=str(watcom / 'binl') + os.pathsep +
+                       PATH=str(bindir) + os.pathsep +
                            env.get('PATH', ''))
-            cc = watcom / 'binl/wcl'
-        flags = [cc, '-q', '-bt=dos', '-0', '-ms', '-ecc', '-os', '-s',
+            cc = bindir / 'wcl'
+        model = {'small': '-ms', 'compact': '-mc', 'medium': '-mm',
+                 'large': '-ml'}[args.model]
+        flags = [cc, '-q', '-bt=dos', '-0', model, '-ecc', '-os', '-s',
                  '-w4', '-wx', '-i=' + str(ROOT / 'include')]
         for source in sorted((ROOT / 'src').glob('*.c')) + sorted(
                 (ROOT / 'adapters').glob('*.c')):
-            run([*flags, '-c', source], source.stem)
+            extra = ['-zu', '-fo=lt_guard_dos.obj'] if source.name == 'lt_guard_dos.c' else []
+            run([*flags, *extra, '-c', source], source.stem)
         run([*flags, '-k4096', '-fe=DEMO.EXE',
              ROOT / 'examples/dos_demo.c', ROOT / 'src/lt_chip.c',
              ROOT / 'src/lt_gfx.c', ROOT / 'src/lt_event.c',
@@ -150,7 +164,8 @@ def main():
              ROOT / 'adapters/lt_tick_dos.c'], 'Tandy logo')
         for exe, sources in DOS_DEMOS.items():
             run([*flags, '-k4096', '-fe=' + exe + '.EXE',
-                 *[ROOT / src for src in sources]], exe.lower())
+                 *[(out / 'lt_guard_dos.obj') if src == 'adapters/lt_guard_dos.c'
+                   else ROOT / src for src in sources]], exe.lower())
     for name, (test, modules) in TESTS.items():
         sources = [ROOT / 'src' / (module + '.c') for module in modules]
         sources.append(ROOT / 'tests' / (test + '.c'))

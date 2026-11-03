@@ -1,5 +1,9 @@
 /* SPDX-License-Identifier: MIT */
 #include "lt_gfx.h"
+#if defined(__WATCOMC__) && defined(__I86__) && !defined(LT_GFX_C_FILL)
+#include <string.h>
+#define LT_GFX_FAST_FILL
+#endif
 
 static int lt_gfx_valid(const lt_gfx_surface *s)
 {
@@ -34,11 +38,17 @@ void lt_gfx_init(lt_gfx_surface *s, lt_gfx_u8 LT_GFX_FAR *pixels)
 
 void lt_gfx_clear(lt_gfx_surface *s, lt_gfx_u8 color)
 {
+#ifndef LT_GFX_FAST_FILL
     unsigned int i;
+#endif
     lt_gfx_u8 value;
     if (!lt_gfx_valid(s)) return;
     value = (lt_gfx_u8)((color & 15U) * 17U);
+#ifdef LT_GFX_FAST_FILL
+    _fmemset(s->pixels, value, LT_GFX_BYTES);
+#else
     for (i = 0; i < LT_GFX_BYTES; ++i) s->pixels[i] = value;
+#endif
 }
 
 int lt_gfx_get(const lt_gfx_surface *s, lt_gfx_i16 x, lt_gfx_i16 y)
@@ -94,7 +104,14 @@ static void lt_gfx_span(lt_gfx_surface *s, long x0, long y, long x1,
     }
     offset = row + (unsigned int)(x0 >> 1);
     stop = row + (unsigned int)(x1 >> 1);
-    while (offset < stop) s->pixels[offset++] = packed;
+#ifdef LT_GFX_FAST_FILL
+    /* Amortize the far runtime call on spans, but retain cheap tiny fills
+     * for glyphs/one-pixel edges. Nibble preservation above is unchanged. */
+    if (stop - offset >= 8U)
+        _fmemset(s->pixels + offset, packed, stop - offset);
+    else
+#endif
+        while (offset < stop) s->pixels[offset++] = packed;
 }
 
 void lt_gfx_rect(lt_gfx_surface *s, lt_gfx_i16 x0, lt_gfx_i16 y0,

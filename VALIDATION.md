@@ -1,3 +1,9 @@
+# Additional 8088 library qualification
+
+The 2026-11-02 general-purpose improvements have strict host and native DOS
+qualification. See [current results and limitations](docs/IMPROVEMENTS-VALIDATION.md).
+The historical publication record below is retained separately.
+
 # Initial public source edition validation
 
 Checked 2026-10-18 against the source selection in `SOURCE.json`.
